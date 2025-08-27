@@ -1,0 +1,71 @@
+﻿@model IEnumerable<TrucksWeighingWebApp.Models.TruckRecord>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Inspection)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PlateNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InitialWeightAtUtc)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.InitialWeight)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FinalWeightAtUtc)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FinalWeight)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NetWeight)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Inspection.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PlateNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.InitialWeightAtUtc)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.InitialWeight)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FinalWeightAtUtc)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FinalWeight)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NetWeight)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

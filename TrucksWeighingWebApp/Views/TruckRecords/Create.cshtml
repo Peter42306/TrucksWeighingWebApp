@@ -1,0 +1,62 @@
+﻿@model TrucksWeighingWebApp.Models.TruckRecord
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>TruckRecord</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="InspectionId" class="control-label"></label>
+                <select asp-for="InspectionId" class ="form-control" asp-items="ViewBag.InspectionId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="PlateNumber" class="control-label"></label>
+                <input asp-for="PlateNumber" class="form-control" />
+                <span asp-validation-for="PlateNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="InitialWeightAtUtc" class="control-label"></label>
+                <input asp-for="InitialWeightAtUtc" class="form-control" />
+                <span asp-validation-for="InitialWeightAtUtc" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="InitialWeight" class="control-label"></label>
+                <input asp-for="InitialWeight" class="form-control" />
+                <span asp-validation-for="InitialWeight" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FinalWeightAtUtc" class="control-label"></label>
+                <input asp-for="FinalWeightAtUtc" class="form-control" />
+                <span asp-validation-for="FinalWeightAtUtc" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FinalWeight" class="control-label"></label>
+                <input asp-for="FinalWeight" class="form-control" />
+                <span asp-validation-for="FinalWeight" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NetWeight" class="control-label"></label>
+                <input asp-for="NetWeight" class="form-control" />
+                <span asp-validation-for="NetWeight" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
