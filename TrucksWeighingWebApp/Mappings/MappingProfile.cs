@@ -8,40 +8,30 @@ namespace TrucksWeighingWebApp.Mappings
     {
         public InspectionProfile() 
         {
-            // Create
+            // Create: VM -> Entity
             CreateMap<InspectionCreateViewModel, Inspection>()
                 .ForMember(d => d.Id,                   o => o.Ignore())
-                .ForMember(d => d.InspectorId,          o => o.Ignore())
-                .ForMember(d => d.Inspector,            o => o.Ignore())
+                .ForMember(d => d.UserId,          o => o.Ignore())
+                .ForMember(d => d.User,            o => o.Ignore())
                 .ForMember(d => d.CreatedAt,            o => o.Ignore())
                 .ForMember(d => d.TruckRecords,         o => o.Ignore())
                 .ForMember(d => d.WeighedTotalWeight,   o => o.Ignore())
                 .ForMember(d => d.DifferenceWeight,     o => o.Ignore())
                 .ForMember(d => d.DifferencePercent,    o => o.Ignore());
 
-            // Edit
+            // Edit: VM -> Entity
             CreateMap<InspectionEditViewModel, Inspection>()
                 .ForMember(d => d.Id, o => o.Ignore())
-                .ForMember(d => d.InspectorId, o => o.Ignore())
-                .ForMember(d => d.Inspector, o => o.Ignore())
+                .ForMember(d => d.UserId, o => o.Ignore())
+                .ForMember(d => d.User, o => o.Ignore())
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
                 .ForMember(d => d.TruckRecords, o => o.Ignore())
                 .ForMember(d => d.WeighedTotalWeight, o => o.Ignore())
                 .ForMember(d => d.DifferenceWeight, o => o.Ignore())
                 .ForMember(d => d.DifferencePercent, o => o.Ignore());
 
-            // For filling Edit view
+            // Entity -> Edit VM
             CreateMap<Inspection, InspectionEditViewModel>();
         }        
-    }
-
-    //public class MappingProfile : Profile
-    //{
-    //    public MappingProfile()
-    //    {
-    //        // Create Inspection
-    //        CreateMap<InspectionCreateViewModel, Inspection>()
-    //            .ForMember();
-    //    }
-    //}
+    }    
 }

@@ -1,11 +1,23 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 using TrucksWeighingWebApp.Data;
 using TrucksWeighingWebApp.Mappings;
 using TrucksWeighingWebApp.Models;
 using TrucksWeighingWebApp.Services;
+using TrucksWeighingWebApp.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add user-secrets
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>();
+}
+
+// SeedOptions
+builder.Services.Configure<SeedOptions>(builder.Configuration.GetSection("Seed"));
 
 // DB: PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -17,10 +29,19 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services
     .AddDefaultIdentity<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = false;        
+        options.SignIn.RequireConfirmedAccount = true;        
+        options.User.RequireUniqueEmail = true;
+
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.AllowedForNewUsers = true;
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+// Email
+builder.Services.AddTransient<IEmailSender, SendGridEmailService>();
 
 // Automapper
 builder.Services.AddAutoMapper(typeof(InspectionProfile));
@@ -33,23 +54,22 @@ var app = builder.Build();
 using(var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    await IdentitySeed.SeedAsync(userManager, roleManager);
+    await IdentitySeed.SeedAsync(services);
 }
 
-    // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseMigrationsEndPoint();
-    }
-    else
-    {
-        app.UseExceptionHandler("/Home/Error");
-        app.UseHsts();
-    }
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseMigrationsEndPoint();
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
 
-app.UseHttpsRedirection();
+//!!! uncomment when production
+//app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

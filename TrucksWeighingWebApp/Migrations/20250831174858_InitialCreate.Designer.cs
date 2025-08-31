@@ -12,7 +12,7 @@ using TrucksWeighingWebApp.Data;
 namespace TrucksWeighingWebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250826123950_InitialCreate")]
+    [Migration("20250831174858_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -269,14 +269,14 @@ namespace TrucksWeighingWebApp.Migrations
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
 
-                    b.Property<string>("InspectorId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Place")
                         .HasColumnType("text");
 
                     b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -289,7 +289,7 @@ namespace TrucksWeighingWebApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InspectorId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Inspections");
                 });
@@ -388,13 +388,13 @@ namespace TrucksWeighingWebApp.Migrations
 
             modelBuilder.Entity("TrucksWeighingWebApp.Models.Inspection", b =>
                 {
-                    b.HasOne("TrucksWeighingWebApp.Models.ApplicationUser", "Inspector")
+                    b.HasOne("TrucksWeighingWebApp.Models.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("InspectorId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Inspector");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TrucksWeighingWebApp.Models.TruckRecord", b =>

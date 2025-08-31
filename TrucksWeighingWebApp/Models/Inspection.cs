@@ -4,8 +4,8 @@
     {
         public int Id { get; set; }
 
-        public required string InspectorId { get; set; }
-        public required ApplicationUser Inspector { get; set; }
+        public required string UserId { get; set; }
+        public required ApplicationUser User { get; set; }
 
         public string? Vessel { get; set; }
         public string? Cargo { get; set; }

@@ -27,9 +27,9 @@ namespace TrucksWeighingWebApp.Data
                 e.Property(x => x.DifferenceWeight).HasPrecision(18, 3);
                 e.Property(x => x.DifferencePercent).HasPrecision(18, 2);
 
-                e.HasOne(x => x.Inspector)
+                e.HasOne(x => x.User)
                     .WithMany()
-                    .HasForeignKey(x => x.InspectorId)
+                    .HasForeignKey(x => x.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 

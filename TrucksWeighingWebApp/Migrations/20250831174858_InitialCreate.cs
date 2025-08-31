@@ -169,7 +169,7 @@ namespace TrucksWeighingWebApp.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    InspectorId = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
                     Vessel = table.Column<string>(type: "text", nullable: true),
                     Cargo = table.Column<string>(type: "text", nullable: true),
                     Place = table.Column<string>(type: "text", nullable: true),
@@ -184,8 +184,8 @@ namespace TrucksWeighingWebApp.Migrations
                 {
                     table.PrimaryKey("PK_Inspections", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Inspections_AspNetUsers_InspectorId",
-                        column: x => x.InspectorId,
+                        name: "FK_Inspections_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -254,9 +254,9 @@ namespace TrucksWeighingWebApp.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Inspections_InspectorId",
+                name: "IX_Inspections_UserId",
                 table: "Inspections",
-                column: "InspectorId");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TruckRecords_InspectionId",
