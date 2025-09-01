@@ -12,7 +12,7 @@ using TrucksWeighingWebApp.Data;
 namespace TrucksWeighingWebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250831174858_InitialCreate")]
+    [Migration("20250901093800_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -333,6 +333,40 @@ namespace TrucksWeighingWebApp.Migrations
                     b.HasIndex("InspectionId");
 
                     b.ToTable("TruckRecords");
+                });
+
+            modelBuilder.Entity("TrucksWeighingWebApp.Models.UserSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Ip")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastSeenUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("StartedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LastSeenUtc");
+
+                    b.HasIndex("StartedUtc", "UserId");
+
+                    b.ToTable("UserSessions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -58,6 +58,23 @@ namespace TrucksWeighingWebApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserSessions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    StartedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastSeenUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsClosed = table.Column<bool>(type: "boolean", nullable: false),
+                    Ip = table.Column<string>(type: "text", nullable: true),
+                    UserAgent = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserSessions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -262,6 +279,16 @@ namespace TrucksWeighingWebApp.Migrations
                 name: "IX_TruckRecords_InspectionId",
                 table: "TruckRecords",
                 column: "InspectionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_LastSeenUtc",
+                table: "UserSessions",
+                column: "LastSeenUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_StartedUtc_UserId",
+                table: "UserSessions",
+                columns: new[] { "StartedUtc", "UserId" });
         }
 
         /// <inheritdoc />
@@ -284,6 +311,9 @@ namespace TrucksWeighingWebApp.Migrations
 
             migrationBuilder.DropTable(
                 name: "TruckRecords");
+
+            migrationBuilder.DropTable(
+                name: "UserSessions");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

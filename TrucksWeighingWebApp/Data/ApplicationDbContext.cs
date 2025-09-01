@@ -6,6 +6,7 @@ namespace TrucksWeighingWebApp.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        public DbSet<UserSession> UserSessions { get; set; }        
         public DbSet<Inspection> Inspections { get; set; }
         public DbSet<TruckRecord> TruckRecords { get; set; }
 
@@ -19,6 +20,19 @@ namespace TrucksWeighingWebApp.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<UserSession>(e =>
+            {
+                e.HasKey(x => x.Id);
+                e.HasIndex(x => x.LastSeenUtc);
+                e.HasIndex(x => new { x.StartedUtc, x.UserId });
+                e.Property(x => x.UserId).IsRequired();
+            });
+
+            builder.Entity<ApplicationUser>(e =>
+            {
+                e.HasKey(x => x.CreatedAt);
+            });
 
             builder.Entity<Inspection>(e =>
             {

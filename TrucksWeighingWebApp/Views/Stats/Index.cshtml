@@ -1,0 +1,109 @@
+﻿@model TrucksWeighingWebApp.Controllers.Admin.StatsController.StatsVm
+
+@{
+    ViewData["Title"] = "Admin stats";
+    string M(int y, int m) => new DateTime(y, m, 1).ToString("yyyy/MM");
+}
+
+<h1>Admin Stats</h1>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Active users today</div>
+                <div class="display-6">@Model.ActiveUsersToday</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Active users this month</div>
+                <div class="display-6">@Model.ActiveUsersThisMonth</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Registrations this month</div>
+                <div class="display-6">@Model.RegistrationsThisMonth</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Registrations total</div>
+                <div class="display-6">@Model.RegistrationsTotal</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Logins this month</div>
+                <div class="display-6">@Model.LoginsThisMonth</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Logins total</div>
+                <div class="display-6">@Model.LoginsTotal</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Unique logins this month</div>
+                <div class="display-6">@Model.UniqueLoginsThisMonth</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Unique logins total</div>
+                <div class="display-6">@Model.UniqueLoginsTotal</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Monthly</h4>
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="text-nowrap">Month</th>
+                <th class="text-nowrap">Active users</th>
+                <th class="text-nowrap">Registrations</th>
+                @* <th class="text-nowrap">Inspections</th>
+                <th class="text-nowrap">Excel exports</th> *@
+                <th class="text-nowrap">Logins</th>
+                <th class="text-nowrap">Unique Logins</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Monthly.OrderBy(x => x.Year).ThenBy(x => x.Month))
+            {
+                <tr>
+                    <td>@M(r.Year, r.Month)</td>
+                    <td>@r.ActiveUsers</td>
+                    <td>@r.Registrations</td>
+                    @* <td>@r.Inspections</td>
+                    <td>@r.ExcelExports</td> *@
+                    <td>@r.Logins</td>
+                    <td>@r.UniqueLogins</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

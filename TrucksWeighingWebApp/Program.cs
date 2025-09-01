@@ -7,6 +7,7 @@ using TrucksWeighingWebApp.Mappings;
 using TrucksWeighingWebApp.Models;
 using TrucksWeighingWebApp.Services;
 using TrucksWeighingWebApp.Infrastructure.Identity;
+using TrucksWeighingWebApp.Infrastructure.Telemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,10 @@ builder.Services.AddAutoMapper(typeof(InspectionProfile));
 // MVC
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddMemoryCache();
+
+
+
 var app = builder.Build();
 
 using(var scope = app.Services.CreateScope())
@@ -75,6 +80,9 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
+
+app.UseMiddleware<UserSessionMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllerRoute(
