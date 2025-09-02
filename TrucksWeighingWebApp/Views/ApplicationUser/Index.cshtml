@@ -1,0 +1,93 @@
+﻿@model IEnumerable<TrucksWeighingWebApp.Controllers.Admin.ApplicationUserController.UserRow>
+@{
+    ViewData["Title"] = "Admin Panel";
+    var index = 1;
+}
+
+<h2>Admin Panel</h2>
+
+@if (TempData["Error"] is string errorText)
+{
+    <div class="alert alert-danger">@errorText</div>
+}
+
+@* <h4>All Users</h4> *@
+<hr />
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Email</th>
+                <th>Created</th>
+                <th>Last seen</th>
+                <th>Started</th>
+                <th>IP</th>
+                <th>User-Agent</th>
+                <th>Logins</th>
+                <th>Online</th>
+                <th>Status</th>
+                <th>Change</th>
+                <th class="text-nowrap">Admin notes & remarks</th>
+                <th>Save</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <form asp-controller="ApplicationUser" asp-action="UpdateStatus" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@user.Id" />
+                    <input type="hidden" name="isActive" value="false" />
+
+                <tr>
+                    <td>@index</td>
+                    <td>@user.Email</td>
+                    <td>@user.CreatedAtUtc.ToString("yyyy/MM/dd")</td>
+                    <td>@(user.LastSeenUtc?.ToString("yyyy/MM/dd HH:mm") ?? "-")</td>
+                    <td>@(user.LastStartedUtc?.ToString("yyyy/MM/dd HH:mm") ?? "-")</td>
+                    <td>@(user.LastIp ?? "-")</td>
+                    <td>@(user.LastUserAgent ?? "-")</td>
+                    <td>@user.LoginCount</td>
+                    <td>
+                        @if (user.IsOnline)
+                        {
+                            <span class="btn btn-success btn-sm mt-2">Online</span>
+                        }
+                        else
+                        {
+
+                            <span class="btn btn-outline-secondary btn-sm mt-2">Offline</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.IsActive)
+                        {
+                            <span class="btn btn-success btn-sm mt-2">Active</span>
+                        }
+                        else
+                        {
+
+                            <span class="btn btn-outline-secondary btn-sm mt-2">Blocked</span>
+                        }
+                    </td>
+                    <td>
+                        <input type="checkbox" name="isActive" value="true"
+                               class="form-check-input mt-2" id="active_@user.Id"
+                               @(user.IsActive ? "checked" : "") />
+                        <label for="active_@user.Id">Active</label>
+                    </td>
+                    <td>
+                        <textarea name="adminNote" class="form-control form-control-sm" rows="3">@user.AdminNote</textarea>
+                    </td>
+                    <td>
+                        <button type="submit" class="btn btn-success btn-sm mt-2">Save</button>
+                    </td>
+                </tr>
+                </form>
+                index++;
+            }
+        </tbody>
+    </table>
+</div>

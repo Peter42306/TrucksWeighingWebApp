@@ -31,7 +31,7 @@ namespace TrucksWeighingWebApp.Data
 
             builder.Entity<ApplicationUser>(e =>
             {
-                e.HasKey(x => x.CreatedAt);
+                e.HasIndex(x => x.CreatedAt);
             });
 
             builder.Entity<Inspection>(e =>

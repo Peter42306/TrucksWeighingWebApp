@@ -30,29 +30,41 @@ namespace TrucksWeighingWebApp.Infrastructure.Telemetry
                 {
                     var now = DateTime.UtcNow;
 
-                    var last = await db.UserSessions
-                        .AsNoTracking()
+                    var last = await db.UserSessions                        
                         .Where(s => s.UserId == userId && !s.IsClosed)
                         .OrderByDescending(s => s.LastSeenUtc)
                         .FirstOrDefaultAsync();
 
-                    if (last == null || now - last.LastSeenUtc > SessionGap)
+                    var ip = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() 
+                        ?? httpContext.Connection.RemoteIpAddress?.ToString();
+
+                    var userAgent= httpContext.Request.Headers["User-Agent"].ToString();
+
+                    if (last == null)
                     {
-                        var s = new UserSession
+                        db.UserSessions.Add(new UserSession
                         {
                             UserId = userId,
-                            StartedUtc = now,
-                            LastSeenUtc = now,
-                            Ip = httpContext.Request.Headers.UserAgent.ToString()
-                        };
-                        db.UserSessions.Add(s);
+                            StartedUtc= now,
+                            LastSeenUtc= now,
+                            Ip = ip,
+                            UserAgent = userAgent
+                        });
+
+                        await db.SaveChangesAsync();
                     }
                     else
                     {
-                        await db.UserSessions.ExecuteUpdateAsync(setters => setters.SetProperty(x => x.LastSeenUtc, now));
-                    }
+                        await db.UserSessions
+                            .Where(s => s.Id == last.Id)
+                            .ExecuteUpdateAsync(setters => setters
+                                .SetProperty(x => x.LastSeenUtc, now)
+                                .SetProperty(x => x.Ip, ip)
+                                .SetProperty(x => x.UserAgent, userAgent)
+                        );
+                    }                    
 
-                    await db.SaveChangesAsync();
+                    
 
                     _cache.Set(cacheKey, true, TouchPeriod);
                 }

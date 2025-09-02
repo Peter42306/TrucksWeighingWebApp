@@ -100,9 +100,15 @@ namespace TrucksWeighingWebApp.Controllers
             if (!ModelState.IsValid)
             {
                 return View(inspection);
-            }            
+            }
 
-            inspection.UserId = _userManager.GetUserId(User);
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Forbid();
+            }
+
+            inspection.UserId = user.Id;
             inspection.CreatedAt = DateTime.UtcNow;
             inspection.WeighedTotalWeight = 0;
             inspection.DifferenceWeight = 0;

@@ -110,12 +110,16 @@ namespace TrucksWeighingWebApp.Controllers.Admin
 
             var uniqueLoginsThisMonth = await _db.UserSessions
                 .AsNoTracking()
-                .Where(s => s.LastSeenUtc >= monthStart)
-                .Select(s => s.UserId).Distinct().CountAsync();
+                .Where(s => s.StartedUtc >= monthStart)
+                .Select(s => s.UserId)
+                .Distinct()
+                .CountAsync();
 
             var uniqueLoginsTotal = await _db.UserSessions
                 .AsNoTracking()
-                .Select(s => s.UserId).Distinct().CountAsync();
+                .Select(s => s.UserId)
+                .Distinct()
+                .CountAsync();
 
             var monthlyUniqueLogins = await _db.UserSessions
                 .AsNoTracking()
@@ -159,8 +163,8 @@ namespace TrucksWeighingWebApp.Controllers.Admin
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToList();
 
-            int GetMonthly(List<(int Year, int Month, int Count)> list, int y, int m)
-                => list.FirstOrDefault(t => t.Year == y && t.Month == m).Count;
+            //int GetMonthly(List<(int Year, int Month, int Count)> list, int y, int m)
+            //    => list.FirstOrDefault(t => t.Year == y && t.Month == m).Count;
 
             var monthly = new List<MonthlyRow>();
             foreach (var k in keys)
@@ -170,7 +174,9 @@ namespace TrucksWeighingWebApp.Controllers.Admin
                     Year = k.Year,
                     Month = k.Month,
                     ActiveUsers   = monthlyActiveUsers.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,
-                    Registrations = monthlyRegistrations.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,                    
+                    Registrations = monthlyRegistrations.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,
+                    //Inspections   = GetMonthly(monthlyInspections, k.Year, k.Month),
+                    //ExcelExports  = GetMonthly(monthlyExports, k.Year, k.Month),
                     Logins        = monthlyLogins.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,
                     UniqueLogins  = monthlyUniqueLogins.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,
                 });

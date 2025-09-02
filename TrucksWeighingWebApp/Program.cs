@@ -1,13 +1,17 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using AutoMapper;
+using Microsoft.Extensions.DependencyInjection;
 using TrucksWeighingWebApp.Data;
+using TrucksWeighingWebApp.Infrastructure.Identity;
+using TrucksWeighingWebApp.Infrastructure.Telemetry;
 using TrucksWeighingWebApp.Mappings;
 using TrucksWeighingWebApp.Models;
 using TrucksWeighingWebApp.Services;
-using TrucksWeighingWebApp.Infrastructure.Identity;
-using TrucksWeighingWebApp.Infrastructure.Telemetry;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
+using TrucksWeighingWebApp.Services.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +25,9 @@ if (builder.Environment.IsDevelopment())
 builder.Services.Configure<SeedOptions>(builder.Configuration.GetSection("Seed"));
 
 // DB: PostgreSQL
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration
+    .GetConnectionString("DefaultConnection") 
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -41,6 +47,13 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+// LoginCount
+builder.Services.AddTransient<AppCookieEvents>();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.EventsType = typeof(AppCookieEvents);
+});
+
 // Email
 builder.Services.AddTransient<IEmailSender, SendGridEmailService>();
 
@@ -51,8 +64,6 @@ builder.Services.AddAutoMapper(typeof(InspectionProfile));
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddMemoryCache();
-
-
 
 var app = builder.Build();
 
