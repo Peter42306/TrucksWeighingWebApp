@@ -1,23 +1,18 @@
-﻿@model TrucksWeighingWebApp.Models.Inspection
+﻿@model TrucksWeighingWebApp.ViewModels.InspectionEditViewModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Inspection";
 }
 
-<h1>Edit</h1>
-
-<h4>Inspection</h4>
+<h1>Edit Inspection</h1>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="UserId" class="control-label"></label>
-                <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId"></select>
-                <span asp-validation-for="UserId" class="text-danger"></span>
-            </div>
+            
             <div class="form-group">
                 <label asp-for="Vessel" class="control-label"></label>
                 <input asp-for="Vessel" class="form-control" />
@@ -35,33 +30,19 @@
             </div>
             <div class="form-group">
                 <label asp-for="DeclaredTotalWeight" class="control-label"></label>
-                <input asp-for="DeclaredTotalWeight" class="form-control" />
+                <input asp-for="DeclaredTotalWeight" class="form-control" type="number" step="0.001" />
                 <span asp-validation-for="DeclaredTotalWeight" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
                 <label asp-for="TimeZoneId" class="control-label"></label>
-                <input asp-for="TimeZoneId" class="form-control" />
+                <select asp-for="TimeZoneId" asp-items="ViewBag.TimeZones" class="form-select"></select>
+                
                 <span asp-validation-for="TimeZoneId" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="WeighedTotalWeight" class="control-label"></label>
-                <input asp-for="WeighedTotalWeight" class="form-control" />
-                <span asp-validation-for="WeighedTotalWeight" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DifferenceWeight" class="control-label"></label>
-                <input asp-for="DifferenceWeight" class="form-control" />
-                <span asp-validation-for="DifferenceWeight" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DifferencePercent" class="control-label"></label>
-                <input asp-for="DifferencePercent" class="form-control" />
-                <span asp-validation-for="DifferencePercent" class="text-danger"></span>
+                <label asp-for="Notes" class="control-label"></label>
+                <textarea asp-for="Notes" class="form-control"></textarea>
+                <span asp-validation-for="Notes" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />

@@ -1,0 +1,15 @@
+﻿@model TrucksWeighingWebApp.Models.TruckRecord
+
+<tr data-id="@Model.Id">
+    <td></td>
+    <td>@Model.PlateNumber</td>
+    <td>@Model.InitialWeightAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
+    <td>@Model.InitialWeight?.ToString("F3")</td>
+    <td>@Model.FinalWeightAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
+    <td>@Model.FinalWeight?.ToString("F3")</td>
+    <td>@Model.NetWeight.ToString("F3")</td>
+    <td>
+        <a asp-controller="TruckRecords" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+        <a asp-controller="TruckRecords" asp-action="Delete" asp-route-id="@Model.Id">Delete</a>
+    </td>
+</tr>

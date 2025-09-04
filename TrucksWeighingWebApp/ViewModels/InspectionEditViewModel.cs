@@ -4,6 +4,7 @@ namespace TrucksWeighingWebApp.ViewModels
 {
     public class InspectionEditViewModel
     {
+        [Required]
         public int Id { get; set; }
 
         [StringLength(128)]
@@ -18,7 +19,10 @@ namespace TrucksWeighingWebApp.ViewModels
         [Range(typeof(decimal), "0", "1000000000", ErrorMessage = "Value should be between 0 and 1,000,000,000")]
         [DisplayFormat(DataFormatString = "{0:F3}", ApplyFormatInEditMode = true)]
         public decimal? DeclaredTotalWeight { get; set; }
-                
+
         public string TimeZoneId { get; set; } = "UTC";
+
+        [StringLength(128)]
+        public string? Notes { get; set; }
     }
 }

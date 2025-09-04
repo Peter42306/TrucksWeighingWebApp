@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TrucksWeighingWebApp.Data;
+using TrucksWeighingWebApp.Infrastructure.Identity;
 using TrucksWeighingWebApp.Models;
+using TrucksWeighingWebApp.ViewModels;
 
 namespace TrucksWeighingWebApp.Controllers
 {
-    [Authorize]
     public class InspectionsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -21,7 +21,7 @@ namespace TrucksWeighingWebApp.Controllers
         private readonly IMapper _mapper;
 
         public InspectionsController(
-            ApplicationDbContext context, 
+            ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             IMapper mapper)
         {
@@ -30,34 +30,25 @@ namespace TrucksWeighingWebApp.Controllers
             _mapper = mapper;
         }
 
-        private void FillTimeZone()
-        {
-            ViewBag.TimeZones = TimeZoneInfo
-                .GetSystemTimeZones()
-                .Select(tz => new SelectListItem
-                {
-                    Value = tz.Id,
-                    Text = tz.DisplayName
-                })
-                .ToList();
-        }
-
         // GET: Inspections
         public async Task<IActionResult> Index(CancellationToken ct)
         {
             IQueryable<Inspection> query = _context.Inspections.AsNoTracking();
 
-            if (User.IsInRole("User"))
+            if (User.IsInRole(RoleNames.User))
             {
                 var currentUserId = _userManager.GetUserId(User);
-                query = query.Where(x => x.UserId == currentUserId);
-            }            
-            
+                query = query.Where(x => x.ApplicationUserId == currentUserId);
+            }
+            else if (User.IsInRole(RoleNames.Admin))
+            {
+                query = query.Include(x => x.ApplicationUser);
+            }
 
             var inspections = await query
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync(ct);
-            
+
             return View(inspections);
         }
 
@@ -70,107 +61,108 @@ namespace TrucksWeighingWebApp.Controllers
             }
 
             var inspection = await _context.Inspections
-                .AsNoTracking()                
+                .AsNoTracking()
+                .Include(i => i.ApplicationUser)
                 .Include(i => i.TruckRecords)
                 .FirstOrDefaultAsync(m => m.Id == id, ct);
-
             if (inspection == null)
             {
                 return NotFound();
             }
-            //if (!CanAccess(inspection))
-            //{
-            //    return Forbid();
-            //}
 
             return View(inspection);
         }
 
         // GET: Inspections/Create
         public IActionResult Create()
-        {            
-            return View();
+        {
+            FillTimeZone();
+            return View(new InspectionCreateViewModel());
         }
 
         // POST: Inspections/Create        
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,UserId,Vessel,Cargo,Place,DeclaredTotalWeight,CreatedAt,TimeZoneId,WeighedTotalWeight,DifferenceWeight,DifferencePercent")] Inspection inspection)
+        public async Task<IActionResult> Create(InspectionCreateViewModel vm, CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
-                return View(inspection);
+                FillTimeZone(vm.TimeZoneId);
+                return View(vm);
             }
 
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
+            var inspection = _mapper.Map<Inspection>(vm);
+
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
             {
                 return Forbid();
             }
+            inspection.ApplicationUserId = userId;
 
-            inspection.UserId = user.Id;
             inspection.CreatedAt = DateTime.UtcNow;
-            inspection.WeighedTotalWeight = 0;
-            inspection.DifferenceWeight = 0;
-            inspection.DifferencePercent = 0;
 
-            _context.Add(inspection);
-            await _context.SaveChangesAsync();
+            _context.Inspections.Add(inspection);
+            await _context.SaveChangesAsync(ct);
 
-            return RedirectToAction(nameof(Details), new { id = inspection.Id });
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Inspections/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int? id, CancellationToken ct)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var inspection = await _context.Inspections.FindAsync(id);
+            var inspection = await _context.Inspections
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == id, ct);
+
             if (inspection == null)
             {
                 return NotFound();
             }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", inspection.UserId);
-            return View(inspection);
+
+            if (!await HasAccessAsync(inspection))
+            {
+                return NotFound();
+            }            
+
+            var vm = _mapper.Map<InspectionEditViewModel>(inspection);
+
+            FillTimeZone(vm.TimeZoneId);
+            return View(vm);
         }
 
-        // POST: Inspections/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Inspections/Edit/5       
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,UserId,Vessel,Cargo,Place,DeclaredTotalWeight,CreatedAt,TimeZoneId,WeighedTotalWeight,DifferenceWeight,DifferencePercent")] Inspection inspection)
+        public async Task<IActionResult> Edit(InspectionEditViewModel vm, CancellationToken ct)
         {
-            if (id != inspection.Id)
+            if (!ModelState.IsValid)
+            {
+                return View(vm);
+            }
+
+            var inspection = await _context.Inspections
+                .FirstOrDefaultAsync(i => i.Id == vm.Id, ct);
+
+            if (inspection == null)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            if (!await HasAccessAsync(inspection))
             {
-                try
-                {
-                    _context.Update(inspection);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InspectionExists(inspection.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", inspection.UserId);
-            return View(inspection);
+
+            _mapper.Map(vm, inspection);
+            await _context.SaveChangesAsync(ct);
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Inspections/Delete/5
@@ -182,7 +174,7 @@ namespace TrucksWeighingWebApp.Controllers
             }
 
             var inspection = await _context.Inspections
-                .Include(i => i.User)
+                .Include(i => i.ApplicationUser)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (inspection == null)
             {
@@ -216,17 +208,41 @@ namespace TrucksWeighingWebApp.Controllers
 
 
 
-
-        private bool CanAccess(Inspection inspection)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inspection"></param>
+        /// <returns></returns>
+        private async Task<bool> HasAccessAsync(Inspection inspection)
         {
-            if (User.IsInRole("Admin"))
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return false;
+            }
+
+            if (inspection.ApplicationUserId == user.Id || User.IsInRole(RoleNames.Admin))
             {
                 return true;
             }
 
-            // User can see only his inspections
-            var currentUserId = _userManager.GetUserId(User);
-            return inspection.UserId == currentUserId;
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void FillTimeZone(string? selectedId = null)
+        {
+            ViewBag.TimeZones = TimeZoneInfo
+                .GetSystemTimeZones()
+                .Select(tz => new SelectListItem
+                {
+                    Value = tz.Id,
+                    Text = tz.DisplayName,
+                    Selected = (tz.Id == selectedId)
+                })
+                .ToList();
         }
     }
 }

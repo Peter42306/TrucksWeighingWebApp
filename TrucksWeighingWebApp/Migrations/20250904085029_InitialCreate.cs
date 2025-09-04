@@ -186,23 +186,21 @@ namespace TrucksWeighingWebApp.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<string>(type: "text", nullable: false),
+                    ApplicationUserId = table.Column<string>(type: "text", nullable: false),
                     Vessel = table.Column<string>(type: "text", nullable: true),
                     Cargo = table.Column<string>(type: "text", nullable: true),
                     Place = table.Column<string>(type: "text", nullable: true),
                     DeclaredTotalWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TimeZoneId = table.Column<string>(type: "text", nullable: false),
-                    WeighedTotalWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: true),
-                    DifferenceWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: true),
-                    DifferencePercent = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true)
+                    Notes = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Inspections", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Inspections_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Inspections_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -215,12 +213,11 @@ namespace TrucksWeighingWebApp.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     InspectionId = table.Column<int>(type: "integer", nullable: false),
-                    PlateNumber = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    InitialWeightAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    InitialWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
-                    FinalWeightAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    FinalWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
-                    NetWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false)
+                    PlateNumber = table.Column<string>(type: "text", nullable: false),
+                    InitialWeightAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    InitialWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: true),
+                    FinalWeightAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    FinalWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -265,20 +262,30 @@ namespace TrucksWeighingWebApp.Migrations
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_CreatedAt",
+                table: "AspNetUsers",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Inspections_UserId",
+                name: "IX_Inspections_ApplicationUserId",
                 table: "Inspections",
-                column: "UserId");
+                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TruckRecords_InspectionId",
                 table: "TruckRecords",
                 column: "InspectionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TruckRecords_PlateNumber",
+                table: "TruckRecords",
+                column: "PlateNumber");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSessions_LastSeenUtc",

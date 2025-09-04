@@ -1,20 +1,25 @@
 ﻿@model IEnumerable<TrucksWeighingWebApp.Models.Inspection>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Index";    
 }
 
-<h1>Index</h1>
+<h1>Inspections</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
 </p>
+<div class="table-responsive">
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.User)
-            </th>
+            @if (User.IsInRole(RoleNames.Admin))
+            {
+                <th>
+                    @Html.DisplayNameFor(model => model.ApplicationUser)
+                </th>
+            }
+            
             <th>
                 @Html.DisplayNameFor(model => model.Vessel)
             </th>
@@ -34,13 +39,7 @@
                 @Html.DisplayNameFor(model => model.TimeZoneId)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.WeighedTotalWeight)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DifferenceWeight)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DifferencePercent)
+                @Html.DisplayNameFor(model => model.Notes)
             </th>
             <th></th>
         </tr>
@@ -48,9 +47,13 @@
     <tbody>
 @foreach (var item in Model) {
         <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.User.Id)
-            </td>
+            @if (User.IsInRole(RoleNames.Admin))
+            {
+                <td>
+                @Html.DisplayFor(modelItem => item.ApplicationUser.Id)
+                </td>
+            }
+            
             <td>
                 @Html.DisplayFor(modelItem => item.Vessel)
             </td>
@@ -61,22 +64,20 @@
                 @Html.DisplayFor(modelItem => item.Place)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.DeclaredTotalWeight)
+                @item.DeclaredTotalWeight?.ToString("F3")
+                @* @Html.DisplayFor(modelItem => item.DeclaredTotalWeight) *@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.CreatedAt)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.TimeZoneId)
+            @{
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(item.TimeZoneId);
+            }
+                @tz.DisplayName
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.WeighedTotalWeight)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DifferenceWeight)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DifferencePercent)
+                @Html.DisplayFor(modelItem => item.Notes)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
@@ -87,3 +88,4 @@
 }
     </tbody>
 </table>
+</div>

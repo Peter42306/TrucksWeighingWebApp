@@ -36,23 +36,26 @@ namespace TrucksWeighingWebApp.Data
 
             builder.Entity<Inspection>(e =>
             {
-                e.Property(x => x.DeclaredTotalWeight).HasPrecision(18, 3);
-                e.Property(x => x.WeighedTotalWeight).HasPrecision(18, 3);
-                e.Property(x => x.DifferenceWeight).HasPrecision(18, 3);
-                e.Property(x => x.DifferencePercent).HasPrecision(18, 2);
+                e.Property(x => x.DeclaredTotalWeight).HasPrecision(18, 3);                
 
-                e.HasOne(x => x.User)
+                e.HasOne(x => x.ApplicationUser)
                     .WithMany()
-                    .HasForeignKey(x => x.UserId)
+                    .HasForeignKey(x => x.ApplicationUserId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<TruckRecord>(e =>
             {
-                e.Property(x => x.PlateNumber).HasMaxLength(32);
+                e.HasOne(r => r.Inspection)
+                    .WithMany(i => i.TruckRecords)
+                    .HasForeignKey(r => r.InspectionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasIndex(x => x.InspectionId);
+                e.HasIndex(x => x.PlateNumber);
+
                 e.Property(x => x.InitialWeight).HasPrecision(18, 3);
-                e.Property(x => x.FinalWeight).HasPrecision(18, 3);
-                e.Property(x => x.NetWeight).HasPrecision(18, 3);                
+                e.Property(x => x.FinalWeight).HasPrecision(18, 3);                
             });
         }
     }

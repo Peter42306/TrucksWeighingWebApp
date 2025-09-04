@@ -19,5 +19,8 @@ namespace TrucksWeighingWebApp.ViewModels
 
         [Required]
         public string TimeZoneId { get; set; } = "UTC";
+
+        [StringLength(128)]
+        public string? Notes { get; set; }
     }
 }

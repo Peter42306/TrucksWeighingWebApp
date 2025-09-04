@@ -12,8 +12,8 @@ using TrucksWeighingWebApp.Data;
 namespace TrucksWeighingWebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250902151405_IdentityFix")]
-    partial class IdentityFix
+    [Migration("20250904085029_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -253,6 +253,10 @@ namespace TrucksWeighingWebApp.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Cargo")
                         .HasColumnType("text");
 
@@ -263,13 +267,8 @@ namespace TrucksWeighingWebApp.Migrations
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
 
-                    b.Property<decimal?>("DifferencePercent")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<decimal?>("DifferenceWeight")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("numeric(18,3)");
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
 
                     b.Property<string>("Place")
                         .HasColumnType("text");
@@ -278,20 +277,12 @@ namespace TrucksWeighingWebApp.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Vessel")
                         .HasColumnType("text");
 
-                    b.Property<decimal?>("WeighedTotalWeight")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("numeric(18,3)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ApplicationUserId");
 
                     b.ToTable("Inspections");
                 });
@@ -304,35 +295,32 @@ namespace TrucksWeighingWebApp.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("FinalWeight")
+                    b.Property<decimal?>("FinalWeight")
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
 
-                    b.Property<DateTime>("FinalWeightAtUtc")
+                    b.Property<DateTime?>("FinalWeightAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("InitialWeight")
+                    b.Property<decimal?>("InitialWeight")
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
 
-                    b.Property<DateTime>("InitialWeightAtUtc")
+                    b.Property<DateTime?>("InitialWeightAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("InspectionId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("NetWeight")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("numeric(18,3)");
-
                     b.Property<string>("PlateNumber")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("InspectionId");
+
+                    b.HasIndex("PlateNumber");
 
                     b.ToTable("TruckRecords");
                 });
@@ -424,13 +412,13 @@ namespace TrucksWeighingWebApp.Migrations
 
             modelBuilder.Entity("TrucksWeighingWebApp.Models.Inspection", b =>
                 {
-                    b.HasOne("TrucksWeighingWebApp.Models.ApplicationUser", "User")
+                    b.HasOne("TrucksWeighingWebApp.Models.ApplicationUser", "ApplicationUser")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("ApplicationUser");
                 });
 
             modelBuilder.Entity("TrucksWeighingWebApp.Models.TruckRecord", b =>
