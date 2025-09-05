@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -14,6 +15,7 @@ using TrucksWeighingWebApp.ViewModels;
 
 namespace TrucksWeighingWebApp.Controllers
 {
+    [Authorize]
     public class TruckRecordsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -45,6 +47,162 @@ namespace TrucksWeighingWebApp.Controllers
 
             return Json(items);
         }
+
+        // GET: TruckRecords
+        [HttpGet]
+        public async Task<IActionResult> Index(int inspectionId, CancellationToken ct)
+        {
+            var inspection = await _context.Inspections
+                .AsNoTracking()
+                .Include(i => i.TruckRecords)
+                .FirstOrDefaultAsync(i => i.Id == inspectionId, ct);
+
+            if (inspection == null)
+            {
+                return NotFound();
+            }
+
+            if (!await HasAccessAsync(inspection))
+            {
+                return NotFound();
+            }
+
+            var vm = new TruckRecordIndexViewModel
+            {
+                Inspection=inspection,
+                New = new TruckRecordCreateViewModel
+                {
+                    InspectionId = inspection.Id,
+                    PlateNumber = string.Empty
+                }
+            };
+
+            return View(vm);
+        }
+
+
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id, int inspectionId, CancellationToken ct)
+        {
+            var record = await _context.TruckRecords
+                .Include(x => x.Inspection)
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+            if (record == null)
+            {
+                return NotFound();
+            }
+
+            if (!await HasAccessAsync(record.Inspection))
+            {
+                return NotFound();
+            }
+
+            _context.TruckRecords.Remove(record);
+            await _context.SaveChangesAsync(ct);
+
+            return RedirectToAction(nameof(Index), new { inspectionId = record.InspectionId });
+        }
+
+
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(TruckRecordCreateViewModel vm, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+            {
+                var inspectionNotValid = await _context.Inspections
+                    .AsNoTracking()
+                    .Include(i => i.TruckRecords)
+                    .FirstOrDefaultAsync(i => i.Id == vm.InspectionId, ct);
+
+                if (inspectionNotValid == null)
+                {
+                    return NotFound();
+                }
+
+                if (!await HasAccessAsync(inspectionNotValid))
+                {
+                    return NotFound();
+                }
+
+                ViewData["Title"]=inspectionNotValid.Vessel;
+                ViewBag.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(inspectionNotValid.TimeZoneId);
+
+                var indexViewModel = new TruckRecordIndexViewModel
+                {
+                    Inspection=inspectionNotValid,
+                    New = vm
+                };
+
+                return View(nameof(Index), indexViewModel);
+            }
+
+            var inspection = await _context.Inspections
+                .FirstOrDefaultAsync(i => i.Id == vm.InspectionId, ct);
+
+            if (inspection == null)
+            {
+                return NotFound();
+            }
+
+            if (!await HasAccessAsync(inspection))
+            {
+                return NotFound();
+            }
+
+            var entity = new TruckRecord
+            {
+                Inspection = inspection,                
+                PlateNumber = vm.PlateNumber,
+                InitialWeight = vm.InitialWeight,
+                FinalWeight = vm.FinalWeight
+            };
+
+            if (vm.InitialWeight.HasValue)
+            {
+                if (vm.InitialWeightAtUtc.HasValue)
+                {
+                    entity.InitialWeightAtUtc = ToUtc(vm.InitialWeightAtUtc.Value, inspection.TimeZoneId);
+                }
+                else
+                {
+                    entity.InitialWeightAtUtc = DateTime.UtcNow;
+                }                
+            }
+
+            if (vm.FinalWeight.HasValue)
+            {
+                if (vm.FinalWeightAtUtc.HasValue)
+                {
+                    entity.FinalWeightAtUtc = ToUtc(vm.FinalWeightAtUtc.Value, inspection.TimeZoneId);
+                }
+                else
+                {
+                    entity.FinalWeightAtUtc = DateTime.UtcNow;
+                }
+            }
+
+            _context.TruckRecords.Add(entity);
+            await _context.SaveChangesAsync(ct);
+            
+            return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
+        }
+
+
+
+
+
+
+
+
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -128,52 +286,12 @@ namespace TrucksWeighingWebApp.Controllers
         }
 
 
-        // GET: TruckRecords
-        public async Task<IActionResult> Index()
-        {
-            var applicationDbContext = _context.TruckRecords.Include(t => t.Inspection);
-            return View(await applicationDbContext.ToListAsync());
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(TruckRecordCreateViewModel vm, CancellationToken ct)
-        {
-            if (!ModelState.IsValid)
-            {
-                // вернёмся на Details той же инспекции и отобразим ошибки (см. ниже ValidationSummary)
-                TempData["FormError"] = "Please fix validation errors.";
-                return RedirectToAction("Details", "Inspections", new { id = vm.InspectionId });
-            }
-
-            var inspection = await _context.Inspections.FindAsync(new object?[] { vm.InspectionId }, ct);
-            if (inspection == null) return NotFound();
-
-            var currentUserId = _userManager.GetUserId(User);
-            if (User.IsInRole(RoleNames.User) && inspection.ApplicationUserId != currentUserId)
-                return Forbid();
-
-            var entity = _mapper.Map<TruckRecord>(vm);
-
-            // время: трактуем ввод как локальное в поясe инспекции, иначе ставим сейчас (UTC)
-            if (vm.InitialWeight.HasValue)
-                entity.InitialWeightAtUtc = vm.InitialWeightAtUtc.HasValue
-                    ? ToUtc(vm.InitialWeightAtUtc.Value, inspection.TimeZoneId)
-                    : DateTime.UtcNow;
-
-            if (vm.FinalWeight.HasValue)
-                entity.FinalWeightAtUtc = vm.FinalWeightAtUtc.HasValue
-                    ? ToUtc(vm.FinalWeightAtUtc.Value, inspection.TimeZoneId)
-                    : DateTime.UtcNow;
-
-            _context.TruckRecords.Add(entity);
-            await _context.SaveChangesAsync(ct);
-
-            // классический PRG
-            return RedirectToAction("Details", "Inspections", new { id = vm.InspectionId });
-        }
-
         
+
+
+
+
+       
 
 
         //// GET: TruckRecords/Details/5
@@ -310,5 +428,26 @@ namespace TrucksWeighingWebApp.Controllers
         //{
         //    return _context.TruckRecords.Any(e => e.Id == id);
         //}
+
+
+
+
+
+
+        private async Task<bool> HasAccessAsync(Inspection inspection)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return false;
+            }
+
+            if (inspection.ApplicationUserId == user.Id || User.IsInRole(RoleNames.Admin))
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

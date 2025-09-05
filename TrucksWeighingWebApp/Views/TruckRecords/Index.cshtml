@@ -1,65 +1,64 @@
-﻿@model IEnumerable<TrucksWeighingWebApp.Models.TruckRecord>
+﻿@model TrucksWeighingWebApp.ViewModels.TruckRecordIndexViewModel
+@* @model IEnumerable<TrucksWeighingWebApp.Models.TruckRecord> *@
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = Model.Inspection.Vessel;
 }
 
 <h1>Index</h1>
+<h2>@Model.Inspection.Vessel</h2>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Inspection)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PlateNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.InitialWeightAtUtc)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.InitialWeight)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FinalWeightAtUtc)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FinalWeight)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Inspection.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PlateNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.InitialWeightAtUtc)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.InitialWeight)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FinalWeightAtUtc)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FinalWeight)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+@await Html.PartialAsync("_TruckRecordCreateForm.cshtml", Model.New)
+
+
+<div class="table-responsive mt-3">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Plate Number</th>
+                <th>Initial Weight</th>
+                <th>Time</th>
+                <th>Final Weight</th>
+                <th>Time</th>
+                <th>Net weight</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var i = 1;
+                foreach (var item in Model.Inspection.TruckRecords.OrderBy(x => x.Id))
+                {
+                    <tr>
+                        <td>@i</td>
+                        <td>@item.PlateNumber</td>
+                        <td>@item.InitialWeight?.ToString("F3")</td>
+                        <td>@item.InitialWeightAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@item.FinalWeight?.ToString("F3")</td>
+                        <td>@item.FinalWeightAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@item.NetWeight.ToString("F3")</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Delete this record');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id"/>
+                                <input type="hidden" name="inspectonId" value="@Model.Inspection.Id"/>
+                                <button type="submit" class="btn btn-link p-0 align-baseline">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    i++;
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <a asp-action="Index" asp-controller="Inspections">Back to Inspections</a>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }
-    </tbody>
-</table>

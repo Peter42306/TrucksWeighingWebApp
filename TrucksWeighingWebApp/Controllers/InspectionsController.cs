@@ -207,12 +207,7 @@ namespace TrucksWeighingWebApp.Controllers
 
 
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="inspection"></param>
-        /// <returns></returns>
+        
         private async Task<bool> HasAccessAsync(Inspection inspection)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -229,9 +224,7 @@ namespace TrucksWeighingWebApp.Controllers
             return false;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
+        
         private void FillTimeZone(string? selectedId = null)
         {
             ViewBag.TimeZones = TimeZoneInfo

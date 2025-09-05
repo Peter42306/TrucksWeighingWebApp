@@ -1,0 +1,41 @@
+﻿@model TrucksWeighingWebApp.ViewModels.TruckRecordCreateViewModel
+
+<form asp-action="Create" method="post" class="row g-2 align-items-end">
+    @Html.AntiForgeryToken()
+
+    <input asp-for="InspectionId" type="hidden" />
+
+    <div class="col-sm-2">
+        <label asp-for="PlateNumber" class="form-label"></label>
+        <input asp-for="PlateNumber" class="form-control" />
+        <span asp-validation-for="PlateNumber" class="text-danger"></span>
+    </div>
+
+    <div class="col-sm-2">
+        <label asp-for="InitialWeight" class="form-label"></label>
+        <input asp-for="InitialWeight" class="form-control" type="number" step="0.001" />
+        <span asp-validation-for="InitialWeight" class="text-danger"></span>
+    </div>
+
+    <div class="col-sm-2">
+        <label asp-for="InitialWeightAtUtc" class="form-label"></label>
+        <input asp-for="InitialWeightAtUtc" class="form-control" type="datetime-local" />
+        <span asp-validation-for="InitialWeightAtUtc" class="text-danger"></span>
+    </div>
+
+    <div class="col-sm-2">
+        <label asp-for="FinalWeight" class="form-label"></label>
+        <input asp-for="FinalWeight" class="form-control" type="number" step="0.001" />
+        <span asp-validation-for="FinalWeight" class="text-danger"></span>
+    </div>
+
+    <div class="col-sm-2">
+        <label asp-for="FinalWeightAtUtc" class="form-label"></label>
+        <input asp-for="FinalWeightAtUtc" class="form-control" type="datetime-local" />
+        <span asp-validation-for="FinalWeightAtUtc" class="text-danger"></span>
+    </div>
+
+    <div class="col-sm-2">
+        <button class="btn btn-primary w-100">Add</button>
+    </div>
+</form>
