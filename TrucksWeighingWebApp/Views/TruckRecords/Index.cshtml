@@ -5,10 +5,19 @@
     ViewData["Title"] = Model.Inspection.Vessel;
 }
 
-<h1>Index</h1>
-<h2>@Model.Inspection.Vessel</h2>
+<h1>Trucks List</h1>
+<hr />
 
-@await Html.PartialAsync("_TruckRecordCreateForm.cshtml", Model.New)
+@if (Model.Edit ==null)
+{
+    @await Html.PartialAsync("_TruckRecordCreateForm", Model.New)
+}
+else
+{
+    @await Html.PartialAsync("_TruckRecordEditForm", Model.Edit)
+}
+
+
 
 
 <div class="table-responsive mt-3">
@@ -16,13 +25,13 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Plate Number</th>
-                <th>Initial Weight</th>
-                <th>Time</th>
-                <th>Final Weight</th>
-                <th>Time</th>
-                <th>Net weight</th>
-                <th>Actions</th>
+                <th class="text-nowrap">Plate Number</th>
+                <th class="text-nowrap">Initial Weight</th>
+                <th class="text-nowrap">Time</th>
+                <th class="text-nowrap">Final Weight</th>
+                <th class="text-nowrap">Time</th>
+                <th class="text-nowrap">Net weight</th>
+                <th class="text-nowrap">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -31,20 +40,49 @@
                 foreach (var item in Model.Inspection.TruckRecords.OrderBy(x => x.Id))
                 {
                     <tr>
-                        <td>@i</td>
-                        <td>@item.PlateNumber</td>
-                        <td>@item.InitialWeight?.ToString("F3")</td>
-                        <td>@item.InitialWeightAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>@item.FinalWeight?.ToString("F3")</td>
-                        <td>@item.FinalWeightAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>@item.NetWeight.ToString("F3")</td>
+                        <td class="text-nowrap">@i</td>
+                        <td class="text-nowrap">@item.PlateNumber</td>
+                        <td class="text-nowrap">@item.InitialWeight?.ToString("F3")</td>
+                        <td class="text-nowrap">
+                            @{
+                                if (item.InitialWeightAtUtc.HasValue)
+                                {
+                                    var tz = TimeZoneInfo.FindSystemTimeZoneById(Model.Inspection.TimeZoneId);
+                                    var local = TimeZoneInfo.ConvertTimeFromUtc(item.InitialWeightAtUtc.Value, tz);
+                                    @local.ToString("yyyy-MM-dd HH:mm")
+
+                                }                                
+                            }                                
+                        </td>
+                        <td class="text-nowrap">@item.FinalWeight?.ToString("F3")</td>
+                        <td class="text-nowrap">
+                            @{
+                                if (item.FinalWeightAtUtc.HasValue)
+                                {
+                                    var tz = TimeZoneInfo.FindSystemTimeZoneById(Model.Inspection.TimeZoneId);
+                                    var local = TimeZoneInfo.ConvertTimeFromUtc(item.FinalWeightAtUtc.Value, tz);
+                                    @local.ToString("yyyy-MM-dd HH:mm")
+
+                                }
+                            }                            
+                        </td>
+                        <td class="text-nowrap">@item.NetWeight.ToString("F3")</td>
                         <td>
-                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
-                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Delete this record');">
+                            <a 
+                                asp-action="Index" 
+                                asp-route-inspectionId="@Model.Inspection.Id" 
+                                asp-route-editId="@item.Id"                                
+                                ><i class="bi bi-pencil"></i></a> 
+                            <form 
+                                asp-action="Delete" 
+                                method="post" 
+                                class="d-inline" 
+                                onsubmit="return confirm('Delete this record?');"
+                                >
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id"/>
-                                <input type="hidden" name="inspectonId" value="@Model.Inspection.Id"/>
-                                <button type="submit" class="btn btn-link p-0 align-baseline">Delete</button>
+                                <input type="hidden" name="inspectionId" value="@Model.Inspection.Id"/>
+                                <button type="submit" class="btn btn-link p-0 align-baseline"><i class="bi bi-trash"></i></button>
                             </form>
                         </td>
                     </tr>
@@ -52,13 +90,67 @@
                 }
             }
         </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="6">Total, mt</th>
+                <th>@Model.Inspection.WeighedTotalWeight.ToString("F3")</th>
+                <th></th>
+            </tr>
+        </tfoot>
     </table>
 </div>
 
-<div>
-    <a asp-action="Index" asp-controller="Inspections">Back to Inspections</a>
-</div>
+<p class="mt-3">
+    B/L figure: <strong>@Model.Inspection.DeclaredTotalWeight?.ToString("F3")</strong> mt<br />
+    Trucks weight control figure: <strong>@Model.Inspection.WeighedTotalWeight.ToString("F3")</strong> mt<br />
+    Difference: <strong>@Model.Inspection.DifferenceWeight.ToString("F3")</strong> mt
+    or <strong>@Model.Inspection.DifferencePercent.ToString("F3")</strong> %<br />
+</p>
+
+<a asp-action="Index" asp-controller="Inspections">Back to Inspections</a>
+
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function() {
+          const input = document.getElementById("plate");
+          const list  = document.getElementById("plate-suggestions");
+          const inspId = document.querySelector('input[name="InspectionId"]').value;
+
+          if (!input || !list) return;
+
+          input.addEventListener("input", async () => {
+            const q = (input.value || "").trim();
+            if (q.length < 1) { list.style.display="none"; list.innerHTML=""; return; }
+
+            const res = await fetch(`/TruckRecords/PlateHints?inspectionId=${inspId}&q=${encodeURIComponent(q)}`);
+            if (!res.ok) return;
+
+            const items = await res.json();
+            if (!items.length) { list.style.display="none"; list.innerHTML=""; return; }
+
+            list.innerHTML = "";
+            for (const p of items) {
+              const li = document.createElement("li");
+              li.className = "list-group-item list-group-item-action";
+              li.textContent = p;
+              li.addEventListener("click", () => {
+                input.value = p;
+                list.style.display = "none";
+                list.innerHTML = "";
+              });
+              list.appendChild(li);
+            }
+            list.style.display = "block";
+          });
+
+          document.addEventListener("click", (e) => {
+            if (!list.contains(e.target) && e.target !== input) {
+              list.style.display = "none";
+            }
+          });
+        })();
+    </script>
 }

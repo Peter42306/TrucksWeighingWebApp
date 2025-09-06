@@ -33,13 +33,24 @@ namespace TrucksWeighingWebApp.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> PlateHints(string q, int take = 20, CancellationToken ct = default)
+        public async Task<IActionResult> PlateHints(int inspectionId, string q, int take = 20, CancellationToken ct = default)
         {
-            q ??= "";
-            var items = await _context.TruckRecords
-                .AsNoTracking()
-                .Where(x => x.PlateNumber.StartsWith(q))
-                .Select(x => x.PlateNumber)
+            q = (q ?? "").Trim();
+            if (q.Length==0)
+            {
+                return Json(Array.Empty<string>());
+            }
+
+            var query = _context.TruckRecords.AsNoTracking();
+
+            var pattern = "%" + q + "%";
+
+            var items = await query
+                .Where(x => 
+                    x.InspectionId == inspectionId &&
+                    !string.IsNullOrWhiteSpace(x.PlateNumber) && 
+                    EF.Functions.ILike(x.PlateNumber!,pattern))
+                .Select(x => x.PlateNumber!)
                 .Distinct()
                 .OrderBy(x => x)
                 .Take(take)
@@ -50,7 +61,7 @@ namespace TrucksWeighingWebApp.Controllers
 
         // GET: TruckRecords
         [HttpGet]
-        public async Task<IActionResult> Index(int inspectionId, CancellationToken ct)
+        public async Task<IActionResult> Index(int inspectionId, int? editId, CancellationToken ct)
         {
             var inspection = await _context.Inspections
                 .AsNoTracking()
@@ -67,6 +78,7 @@ namespace TrucksWeighingWebApp.Controllers
                 return NotFound();
             }
 
+            // new row in table
             var vm = new TruckRecordIndexViewModel
             {
                 Inspection=inspection,
@@ -76,6 +88,36 @@ namespace TrucksWeighingWebApp.Controllers
                     PlateNumber = string.Empty
                 }
             };
+
+            // edit row in table
+            if (editId.HasValue)
+            {
+                var editRow = inspection.TruckRecords.FirstOrDefault(x => x.Id == editId.Value);
+                if (editRow != null)
+                {
+                    DateTime? ConvertToLocalTime(DateTime? utc)
+                    {
+                        if (!utc.HasValue)
+                        {
+                            return null;
+                        }
+
+                        var tz = TimeZoneInfo.FindSystemTimeZoneById(inspection.TimeZoneId);
+                        return TimeZoneInfo.ConvertTimeFromUtc(utc.Value, tz);
+                    }
+
+                    vm.Edit = new TruckRecordEditViewModel
+                    {
+                        Id = editRow.Id,
+                        InspectionId = inspection.Id,
+                        PlateNumber = editRow.PlateNumber,
+                        InitialWeight = editRow.InitialWeight,
+                        InitialWeightAtUtc = ConvertToLocalTime(editRow.InitialWeightAtUtc),
+                        FinalWeight = editRow.FinalWeight,
+                        FinalWeightAtUtc = ConvertToLocalTime(editRow.FinalWeightAtUtc)
+                    };
+                }
+            }
 
             return View(vm);
         }
@@ -159,7 +201,7 @@ namespace TrucksWeighingWebApp.Controllers
             var entity = new TruckRecord
             {
                 Inspection = inspection,                
-                PlateNumber = vm.PlateNumber,
+                PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ", ""),
                 InitialWeight = vm.InitialWeight,
                 FinalWeight = vm.FinalWeight
             };
@@ -195,6 +237,58 @@ namespace TrucksWeighingWebApp.Controllers
         }
 
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(TruckRecordEditViewModel vm, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+            {
+                return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
+            }
+
+            var editRow = await _context.TruckRecords
+                .Include(x => x.Inspection)
+                .FirstOrDefaultAsync(x => x.Id == vm.Id);
+
+            if (editRow == null)
+            {
+                return NotFound();
+            }
+
+            editRow.PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ","");
+            editRow.InitialWeight = vm.InitialWeight;
+            editRow.FinalWeight = vm.FinalWeight;
+
+
+
+            if (vm.InitialWeight.HasValue)
+            {
+                if (vm.InitialWeightAtUtc.HasValue)
+                {
+                    editRow.InitialWeightAtUtc = ToUtc(vm.InitialWeightAtUtc.Value, editRow.Inspection.TimeZoneId);
+                }
+                else
+                {
+                    editRow.InitialWeightAtUtc = DateTime.UtcNow;
+                }
+            }
+
+            if (vm.FinalWeight.HasValue)
+            {
+                if (vm.FinalWeightAtUtc.HasValue)
+                {
+                    editRow.FinalWeightAtUtc = ToUtc(vm.FinalWeightAtUtc.Value, editRow.Inspection.TimeZoneId);
+                }
+                else
+                {
+                    editRow.FinalWeightAtUtc = DateTime.UtcNow;
+                }
+            }
+
+            await _context.SaveChangesAsync(ct);
+
+            return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
+        }
 
 
 
@@ -203,6 +297,7 @@ namespace TrucksWeighingWebApp.Controllers
 
 
 
+        /// =================================================================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -260,12 +355,7 @@ namespace TrucksWeighingWebApp.Controllers
 
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="localUnspecified"></param>
-        /// <param name="timeZoneId"></param>
-        /// <returns></returns>
+        
         private static DateTime ToUtc(DateTime localUnspecified, string timeZoneId)
         {
             var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
@@ -273,12 +363,7 @@ namespace TrucksWeighingWebApp.Controllers
             return TimeZoneInfo.ConvertTimeToUtc(local, tz);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="utc"></param>
-        /// <param name="timeZoneId"></param>
-        /// <returns></returns>
+        
         private static DateTime FromUtc(DateTime utc, string timeZoneId)
         {
             var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);

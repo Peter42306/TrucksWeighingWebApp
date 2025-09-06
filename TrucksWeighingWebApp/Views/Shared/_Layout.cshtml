@@ -55,9 +55,9 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Inspections" asp-action="Index">Inspections</a>
                         </li>
-                        <li class="nav-item">
+                        @* <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="TruckRecords" asp-action="Index">Truck Records</a>
-                        </li>
+                        </li> *@
 
                         @if (User.IsInRole(RoleNames.Admin))
                         {

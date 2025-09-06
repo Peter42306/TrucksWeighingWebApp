@@ -5,6 +5,7 @@
 }
 
 <h1>Inspections</h1>
+<hr />
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -41,7 +42,7 @@
             <th>
                 @Html.DisplayNameFor(model => model.Notes)
             </th>
-            <th></th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -54,16 +55,16 @@
                 </td>
             }
             
-            <td>
+            <td class="text-nowrap">
                 @Html.DisplayFor(modelItem => item.Vessel)
             </td>
-            <td>
+            <td class="text-nowrap">
                 @Html.DisplayFor(modelItem => item.Cargo)
             </td>
-            <td>
+            <td class="text-nowrap">
                 @Html.DisplayFor(modelItem => item.Place)
             </td>
-            <td>
+            <td class="text-nowrap">
                 @item.DeclaredTotalWeight?.ToString("F3")
                 @* @Html.DisplayFor(modelItem => item.DeclaredTotalWeight) *@
             </td>
@@ -73,15 +74,18 @@
             <td>
             @{
                 var tz = TimeZoneInfo.FindSystemTimeZoneById(item.TimeZoneId);
+                var offset = tz.BaseUtcOffset;
+                var sign = offset.Hours >= 0 ? "+" : "-";
+                var formatted = $"UTC{sign}{offset:hh\\:mm}";
             }
-                @tz.DisplayName
+                @formatted
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Notes)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                @* <a asp-action="Details" asp-route-id="@item.Id">Details</a> | *@
                 <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
                 <a asp-controller="TruckRecords" asp-action="Index" asp-route-inspectionId="@item.Id">Trucks</a>
             </td>

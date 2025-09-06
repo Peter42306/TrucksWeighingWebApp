@@ -6,11 +6,14 @@ namespace TrucksWeighingWebApp.ViewModels
     public class TruckRecordIndexViewModel
     {
         public required Inspection Inspection { get; set; }
+        
         public TruckRecordCreateViewModel New {  get; set; } =
             new TruckRecordCreateViewModel() 
             {
                 PlateNumber = string.Empty
             };
+
+        public TruckRecordEditViewModel? Edit { get; set; }
 
         public IEnumerable<TruckRecord> TruckRecords
         {

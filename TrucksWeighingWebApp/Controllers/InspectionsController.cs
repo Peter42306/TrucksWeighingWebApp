@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -14,6 +15,7 @@ using TrucksWeighingWebApp.ViewModels;
 
 namespace TrucksWeighingWebApp.Controllers
 {
+    [Authorize]
     public class InspectionsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -35,19 +37,30 @@ namespace TrucksWeighingWebApp.Controllers
         {
             IQueryable<Inspection> query = _context.Inspections.AsNoTracking();
 
-            if (User.IsInRole(RoleNames.User))
+            if (User.IsInRole(RoleNames.Admin))
+            {
+                query = query.Include(x => x.ApplicationUser);
+            }
+            else
             {
                 var currentUserId = _userManager.GetUserId(User);
                 query = query.Where(x => x.ApplicationUserId == currentUserId);
             }
-            else if (User.IsInRole(RoleNames.Admin))
-            {
-                query = query.Include(x => x.ApplicationUser);
-            }
 
-            var inspections = await query
-                .OrderByDescending(x => x.CreatedAt)
-                .ToListAsync(ct);
+                //if (User.IsInRole(RoleNames.User))
+                //{
+                //    var currentUserId = _userManager.GetUserId(User);
+                //    query = query.Where(x => x.ApplicationUserId == currentUserId);
+                //}
+                //else if (User.IsInRole(RoleNames.Admin))
+                //{
+                //    query = query.Include(x => x.ApplicationUser);
+                //}
+
+
+                var inspections = await query
+                    .OrderByDescending(x => x.CreatedAt)
+                    .ToListAsync(ct);
 
             return View(inspections);
         }

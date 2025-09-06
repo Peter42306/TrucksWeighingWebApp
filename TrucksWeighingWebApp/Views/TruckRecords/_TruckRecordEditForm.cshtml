@@ -1,23 +1,17 @@
-﻿@model TrucksWeighingWebApp.ViewModels.TruckRecordCreateViewModel
+﻿@model TrucksWeighingWebApp.ViewModels.TruckRecordEditViewModel
 
-<h4>Add new truck</h4>
+<h4>Edit truck @Model.PlateNumber</h4>
 
-<form asp-action="Create" method="post" class="row g-2 align-items-end">
+<form asp-action="Edit" method="post" class="row g-2 align-items-end">
     @Html.AntiForgeryToken()
 
+    <input asp-for="Id" type="hidden" />
     <input asp-for="InspectionId" type="hidden" />
 
-    <div class="col-lg-2 position-relative">
+    <div class="col-lg-2">
         <label asp-for="PlateNumber" class="form-label"></label>
-        <input name="PlateNumber" id="plate" class="form-control" autocomplete="off"/>
-        <ul id="plate-suggestions" 
-            class="list-group position-absolute w-100"
-            style="z-index:1000; max-height:200px; overflow-y:auto; display:none;">
-        </ul>
-
-        @* <label asp-for="PlateNumber" class="form-label"></label>
-        <input asp-for="PlateNumber" class="form-control"/>
-        <span asp-validation-for="PlateNumber" class="text-danger d-none"></span> *@
+        <input asp-for="PlateNumber" class="form-control" />
+        <span asp-validation-for="PlateNumber" class="text-danger d-none"></span>
     </div>
 
     <div class="col-6 col-lg-2">
@@ -47,12 +41,11 @@
     <div class="col-lg-2">
         <div class="row g-1">
             <div class="col-6">
-                <button class="btn btn-primary w-100">Add</button>
+                <button class="btn btn-primary w-100">Save</button>
             </div>
             <div class="col-6">
                 <a class="btn btn-secondary w-100" asp-action="Index" asp-route-inspectionId="@Model.InspectionId">Cancel</a>
             </div>
-        </div>
-        @* <button class="btn btn-primary w-100">Add</button> *@
+        </div>                
     </div>
 </form>
