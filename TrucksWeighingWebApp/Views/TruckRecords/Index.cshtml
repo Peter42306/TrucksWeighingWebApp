@@ -1,4 +1,5 @@
-﻿@model TrucksWeighingWebApp.ViewModels.TruckRecordIndexViewModel
+﻿@using TrucksWeighingWebApp.ViewModels
+@model TrucksWeighingWebApp.ViewModels.TruckRecordIndexViewModel
 @* @model IEnumerable<TrucksWeighingWebApp.Models.TruckRecord> *@
 
 @{
@@ -8,23 +9,71 @@
 <h1>Trucks List</h1>
 <hr />
 
+
 @if (Model.Edit ==null)
 {
-    @await Html.PartialAsync("_TruckRecordCreateForm", Model.New)
+    @await Html.PartialAsync(
+        "_TruckRecordCreateForm", 
+        Model.New, 
+        new ViewDataDictionary(ViewData)
+        {
+            ["SortOrder"] = Model.SortOrder,
+            ["Page"] = Model.Page,
+            ["PageSize"] = Model.PageSize
+        })
 }
 else
 {
     @await Html.PartialAsync("_TruckRecordEditForm", Model.Edit)
 }
 
+@if (TempData["DeleteWarning"] is string deleteWarning)
+{
+    <div class="alert alert-warning mt-2">@deleteWarning</div>
+}
 
 
+<form method="get" class="mb-2 mt-2 d-flex gap-2 align-items-center justify-content-end">
+    <input type="hidden" name="inspectionId" value="@Model.Inspection.Id"/>
+    <input type="hidden" name="sortOrder" value="@Model.SortOrder"/>
+    <input type="hidden" name="page" value="1"/>
+
+    <label class="form-label m-0" for="pageSize">Trucks per page:</label>
+    <select id="pageSize" 
+            name="pageSize" 
+            class="form-select form-select-sm" 
+            style="width:auto" 
+            onchange="this.form.submit()">
+        @foreach (var option in Model.PageSizeOptions)
+        {
+            <option value="@option.Value"
+                    selected="@(option.Value == Model.PageSize ? "selected" : null)">
+                    @option.Label
+            </option>
+        }
+    </select>
+</form>
 
 <div class="table-responsive mt-3">
     <table class="table">
         <thead>
             <tr>
-                <th>#</th>
+                <th class ="text-nowrap">
+                    #
+                    <a  asp-action="Index"
+                        asp-route-inspectionId="@Model.Inspection.Id"
+                        asp-route-sortOrder="@(Model.SortOrder == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending)">
+                        
+                        @if (Model.SortOrder == SortOrder.Ascending)
+                        {
+                            <i class="bi bi-sort-numeric-up"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-sort-numeric-down"></i>
+                        }
+                    </a>                    
+                </th>
                 <th class="text-nowrap">Plate Number</th>
                 <th class="text-nowrap">Initial Weight</th>
                 <th class="text-nowrap">Time</th>
@@ -36,18 +85,26 @@ else
         </thead>
         <tbody>
             @{
-                var i = 1;
-                foreach (var item in Model.Inspection.TruckRecords.OrderBy(x => x.Id))
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(Model.Inspection.TimeZoneId);
+
+                // var totalRows = Model.TruckRecords.Count;
+                // var asc = Model.SortOrder == SortOrder.Ascending;
+                // var idx = 0;
+
+
+
+                foreach (var item in Model.TruckRecords)
                 {
+                    // var i = asc ? (idx + 1) : (totalRows - idx);
+
                     <tr>
-                        <td class="text-nowrap">@i</td>
+                        <td class="text-nowrap">@item.SerialNumber</td>
                         <td class="text-nowrap">@item.PlateNumber</td>
                         <td class="text-nowrap">@item.InitialWeight?.ToString("F3")</td>
                         <td class="text-nowrap">
                             @{
                                 if (item.InitialWeightAtUtc.HasValue)
-                                {
-                                    var tz = TimeZoneInfo.FindSystemTimeZoneById(Model.Inspection.TimeZoneId);
+                                {                                    
                                     var local = TimeZoneInfo.ConvertTimeFromUtc(item.InitialWeightAtUtc.Value, tz);
                                     @local.ToString("yyyy-MM-dd HH:mm")
 
@@ -58,8 +115,7 @@ else
                         <td class="text-nowrap">
                             @{
                                 if (item.FinalWeightAtUtc.HasValue)
-                                {
-                                    var tz = TimeZoneInfo.FindSystemTimeZoneById(Model.Inspection.TimeZoneId);
+                                {                                    
                                     var local = TimeZoneInfo.ConvertTimeFromUtc(item.FinalWeightAtUtc.Value, tz);
                                     @local.ToString("yyyy-MM-dd HH:mm")
 
@@ -72,7 +128,7 @@ else
                                 asp-action="Index" 
                                 asp-route-inspectionId="@Model.Inspection.Id" 
                                 asp-route-editId="@item.Id"                                
-                                ><i class="bi bi-pencil"></i></a> 
+                                ><i class="bi bi-pencil me-2"></i></a> 
                             <form 
                                 asp-action="Delete" 
                                 method="post" 
@@ -86,7 +142,7 @@ else
                             </form>
                         </td>
                     </tr>
-                    i++;
+                    // idx++;
                 }
             }
         </tbody>
@@ -99,6 +155,77 @@ else
         </tfoot>
     </table>
 </div>
+
+@if (Model.TotalPages > 1)
+{
+    var window = 2;
+    var start = Math.Max(1, Model.Page - window);
+    var end = Math.Min(Model.TotalPages, Model.Page + window);
+
+    <nav aria-label="Trucks pagination" class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center">
+
+            <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                <a  class="page-link"
+                    asp-action="Index"
+                    asp-route-inspectionId="@Model.Inspection.Id"
+                    asp-route-sortOrder="@(Model.SortOrder == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending)" 
+                    asp-route-page="1" 
+                    asp-route-pageSize="@Model.PageSize">
+                    First
+                </a>
+            </li>
+
+            <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-inspectionId="@Model.Inspection.Id"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-page="@(Model.Page - 1)"
+                   asp-route-pageSize="@Model.PageSize">
+                    Prev
+                </a>
+            </li>
+
+            @for (var p = start; p <= end; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-inspectionId="@Model.Inspection.Id"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-page="@p"
+                       asp-route-pageSize="@Model.PageSize">
+                        @p
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-inspectionId="@Model.Inspection.Id"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-page="@(Model.Page + 1)"
+                   asp-route-pageSize="@Model.PageSize">
+                    Next
+                </a>
+            </li>
+
+            <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-inspectionId="@Model.Inspection.Id"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-page="@(Model.TotalPages)"
+                   asp-route-pageSize="@Model.PageSize">
+                    Last
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+}
 
 <p class="mt-3">
     B/L figure: <strong>@Model.Inspection.DeclaredTotalWeight?.ToString("F3")</strong> mt<br />

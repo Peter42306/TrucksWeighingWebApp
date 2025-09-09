@@ -3,6 +3,30 @@ using TrucksWeighingWebApp.Models;
 
 namespace TrucksWeighingWebApp.ViewModels
 {
+    public enum SortOrder
+    {
+        Ascending,
+        Descending
+    }
+
+    public static class PageSizes
+    {
+        public const int Default = 5;
+        public const int Small = 10;
+        public const int Large = 50;
+        public const int VeryLarge = 100;
+        public const int All = int.MaxValue;
+
+        public static IReadOnlyList<(int Value, string Label)> Options = new List<(int, string)>
+        {
+            (Default, "5"),
+            (Small, "10"),            
+            (Large, "50"),
+            (VeryLarge, "100"),
+            (All, "All")
+        };
+    }
+
     public class TruckRecordIndexViewModel
     {
         public required Inspection Inspection { get; set; }
@@ -15,19 +39,53 @@ namespace TrucksWeighingWebApp.ViewModels
 
         public TruckRecordEditViewModel? Edit { get; set; }
 
-        public IEnumerable<TruckRecord> TruckRecords
+        public SortOrder SortOrder { get; set; } = SortOrder.Ascending; // "asc" | "desc"
+
+
+        public IReadOnlyList<TruckRecord> TruckRecords { get; set; } = Array.Empty<TruckRecord>();
+        //public List<TruckRecord> TruckRecords { get; set; } = new List<TruckRecord>();
+        //public IEnumerable<TruckRecord> TruckRecords { get; init; } = Enumerable.Empty<TruckRecord>();
+        //{
+        //    get
+        //    {
+        //        if (Inspection != null && Inspection.TruckRecords != null)
+        //        {
+        //            return Inspection.TruckRecords;
+        //        }
+        //        else
+        //        {
+        //            return Enumerable.Empty<TruckRecord>();
+        //        }
+        //    }
+        //}
+
+        // pagination
+        public int Page { get; set; } = 1;          // 1-based
+        public int PageSize { get; set; } = PageSizes.Default;     // 10, 50, "All" = int.MaxValue
+        public int TotalCount { get; set; }
+        public int TotalPages
         {
             get
             {
-                if (Inspection != null && Inspection.TruckRecords != null)
+                if (PageSize >= PageSizes.All)
                 {
-                    return Inspection.TruckRecords;
+                    return 1;
                 }
                 else
                 {
-                    return Enumerable.Empty<TruckRecord>();
+                    double result = (double)TotalCount / PageSize;
+                    return (int)Math.Ceiling(result);
                 }
             }
         }
+
+        public IReadOnlyList<(int Value, string Label)> PageSizeOptions
+        {
+            get
+            {
+                return PageSizes.Options;
+            }
+        }
+
     }
 }

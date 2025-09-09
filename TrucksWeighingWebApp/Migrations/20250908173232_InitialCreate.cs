@@ -213,7 +213,8 @@ namespace TrucksWeighingWebApp.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     InspectionId = table.Column<int>(type: "integer", nullable: false),
-                    PlateNumber = table.Column<string>(type: "text", nullable: false),
+                    PlateNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    SerialNumber = table.Column<int>(type: "integer", nullable: false),
                     InitialWeightAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     InitialWeight = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: true),
                     FinalWeightAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -278,14 +279,15 @@ namespace TrucksWeighingWebApp.Migrations
                 column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TruckRecords_InspectionId",
+                name: "IX_TruckRecords_InspectionId_PlateNumber",
                 table: "TruckRecords",
-                column: "InspectionId");
+                columns: new[] { "InspectionId", "PlateNumber" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_TruckRecords_PlateNumber",
+                name: "IX_TruckRecords_InspectionId_SerialNumber",
                 table: "TruckRecords",
-                column: "PlateNumber");
+                columns: new[] { "InspectionId", "SerialNumber" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSessions_LastSeenUtc",

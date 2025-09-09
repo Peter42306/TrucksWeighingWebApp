@@ -61,7 +61,13 @@ namespace TrucksWeighingWebApp.Controllers
 
         // GET: TruckRecords
         [HttpGet]
-        public async Task<IActionResult> Index(int inspectionId, int? editId, CancellationToken ct)
+        public async Task<IActionResult> Index(
+            int inspectionId, 
+            int? editId, 
+            SortOrder sortOrder = SortOrder.Descending, 
+            int page = 1, 
+            int pageSize = PageSizes.Default, // 10, 50, int.MaxValue
+            CancellationToken ct=default)
         {
             var inspection = await _context.Inspections
                 .AsNoTracking()
@@ -78,16 +84,62 @@ namespace TrucksWeighingWebApp.Controllers
                 return NotFound();
             }
 
+            // basic query
+            var query = _context.TruckRecords
+                .AsNoTracking()
+                .Where(i => i.InspectionId == inspectionId);
+
+            var totalTrucks = await query.CountAsync(ct);
+
+
+            // sorting
+            query = (sortOrder == SortOrder.Descending)
+                ? query.OrderByDescending(x => x.Id)
+                : query.OrderBy(x => x.Id);
+
+
+
+            // pagination
+
+
+            var effectivePageSize = (pageSize <= 0) ? PageSizes.Default : pageSize;
+
+            List<TruckRecord> rows;
+
+            if (effectivePageSize == PageSizes.All)
+            {
+                page = 1;
+                rows = await query.ToListAsync(ct);
+            }
+            else
+            {
+                var totalPages = Math.Max(1, (int)Math.Ceiling((double)totalTrucks / effectivePageSize));
+                
+                page = Math.Clamp(page, 1, totalPages);                
+
+                rows = await query
+                    .Skip((page -1) * effectivePageSize)
+                    .Take(effectivePageSize)
+                    .ToListAsync(ct);                
+            }
+
+            
+
+
             // new row in table
             var vm = new TruckRecordIndexViewModel
             {
                 Inspection=inspection,
-                New = new TruckRecordCreateViewModel
-                {
-                    InspectionId = inspection.Id,
-                    PlateNumber = string.Empty
-                }
+                New = new TruckRecordCreateViewModel { InspectionId = inspection.Id, PlateNumber = string.Empty },
+                SortOrder = sortOrder,
+                TruckRecords = rows,
+
+                Page = page,
+                PageSize = effectivePageSize,
+                TotalCount = totalTrucks
             };
+
+            
 
             // edit row in table
             if (editId.HasValue)
@@ -127,15 +179,20 @@ namespace TrucksWeighingWebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id, int inspectionId, CancellationToken ct)
+        public async Task<IActionResult> Delete(
+            int id, int inspectionId, 
+            SortOrder sortOrder, int page, int pageSize,
+            CancellationToken ct)
         {
             var record = await _context.TruckRecords
                 .Include(x => x.Inspection)
-                .FirstOrDefaultAsync(x => x.Id == id, ct);
+                .FirstOrDefaultAsync(x => x.Id == id && x.InspectionId == inspectionId, ct);
 
             if (record == null)
             {
-                return NotFound();
+                TempData["DeleteWarning"] = "This truck was already removed by someone else (Truck list was not renewed before deleting record).";
+                return RedirectToAction(nameof(Index), new { inspectionId });
+                //return NotFound();
             }
 
             if (!await HasAccessAsync(record.Inspection))
@@ -143,10 +200,31 @@ namespace TrucksWeighingWebApp.Controllers
                 return NotFound();
             }
 
-            _context.TruckRecords.Remove(record);
-            await _context.SaveChangesAsync(ct);
+            using var tx = await _context.Database.BeginTransactionAsync(ct);
+            try
+            {
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"SELECT 1 FROM \"Inspections\" WHERE \"Id\" = {inspectionId} FOR UPDATE",
+                    ct);
 
-            return RedirectToAction(nameof(Index), new { inspectionId = record.InspectionId });
+                _context.TruckRecords.Remove(record);
+                await _context.SaveChangesAsync(ct);
+
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE \"TruckRecords\" SET \"SerialNumber\" = \"SerialNumber\" - 1 WHERE \"InspectionId\" = {inspectionId} AND \"SerialNumber\" > {record.SerialNumber}"
+                    , ct);
+                
+                await tx.CommitAsync();
+            }
+            catch (Exception)
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+
+            
+
+            return RedirectToAction(nameof(Index), new { inspectionId = record.InspectionId, sortOrder, page, pageSize });
         }
 
 
@@ -154,7 +232,10 @@ namespace TrucksWeighingWebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(TruckRecordCreateViewModel vm, CancellationToken ct)
+        public async Task<IActionResult> Create(
+            TruckRecordCreateViewModel vm,
+            SortOrder sortOrder, int page, int pageSize,
+            CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
@@ -182,7 +263,8 @@ namespace TrucksWeighingWebApp.Controllers
                     New = vm
                 };
 
-                return View(nameof(Index), indexViewModel);
+                //return View(nameof(Index), indexViewModel);
+                return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
             }
 
             var inspection = await _context.Inspections
@@ -198,48 +280,74 @@ namespace TrucksWeighingWebApp.Controllers
                 return NotFound();
             }
 
-            var entity = new TruckRecord
-            {
-                Inspection = inspection,                
-                PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ", ""),
-                InitialWeight = vm.InitialWeight,
-                FinalWeight = vm.FinalWeight
-            };
+            using var tx = await _context.Database.BeginTransactionAsync(ct);
 
-            if (vm.InitialWeight.HasValue)
+            try
             {
-                if (vm.InitialWeightAtUtc.HasValue)
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"SELECT 1 FROM \"Inspections\" WHERE \"Id\" = {vm.InspectionId} FOR UPDATE",
+                    ct);
+
+                var existingMaxSerialNumber = await _context.TruckRecords
+                    .Where(t => t.InspectionId == vm.InspectionId)
+                    .Select(t => (int?)t.SerialNumber)
+                    .MaxAsync(ct) ?? 0;
+                var serialNumber = existingMaxSerialNumber + 1;
+
+                var entity = new TruckRecord
                 {
-                    entity.InitialWeightAtUtc = ToUtc(vm.InitialWeightAtUtc.Value, inspection.TimeZoneId);
+                    Inspection = inspection,
+                    SerialNumber = serialNumber,
+                    PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ", ""),
+                    InitialWeight = vm.InitialWeight,
+                    FinalWeight = vm.FinalWeight
+                };
+
+                if (vm.InitialWeight.HasValue)
+                {
+                    if (vm.InitialWeightAtUtc.HasValue)
+                    {
+                        entity.InitialWeightAtUtc = ToUtc(vm.InitialWeightAtUtc.Value, inspection.TimeZoneId);
+                    }
+                    else
+                    {
+                        entity.InitialWeightAtUtc = DateTime.UtcNow;
+                    }
                 }
-                else
+
+                if (vm.FinalWeight.HasValue)
                 {
-                    entity.InitialWeightAtUtc = DateTime.UtcNow;
-                }                
+                    if (vm.FinalWeightAtUtc.HasValue)
+                    {
+                        entity.FinalWeightAtUtc = ToUtc(vm.FinalWeightAtUtc.Value, inspection.TimeZoneId);
+                    }
+                    else
+                    {
+                        entity.FinalWeightAtUtc = DateTime.UtcNow;
+                    }
+                }
+
+                _context.TruckRecords.Add(entity);
+                await _context.SaveChangesAsync(ct);
+
+                await tx.CommitAsync(ct);
+            }
+            catch (Exception)
+            {
+                await tx.RollbackAsync(ct);
+                throw;
             }
 
-            if (vm.FinalWeight.HasValue)
-            {
-                if (vm.FinalWeightAtUtc.HasValue)
-                {
-                    entity.FinalWeightAtUtc = ToUtc(vm.FinalWeightAtUtc.Value, inspection.TimeZoneId);
-                }
-                else
-                {
-                    entity.FinalWeightAtUtc = DateTime.UtcNow;
-                }
-            }
-
-            _context.TruckRecords.Add(entity);
-            await _context.SaveChangesAsync(ct);
-            
-            return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
+            return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId, sortOrder, page, pageSize });
         }
 
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(TruckRecordEditViewModel vm, CancellationToken ct)
+        public async Task<IActionResult> Edit(
+            TruckRecordEditViewModel vm,
+            SortOrder sortOrder, int page, int pageSize,
+            CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
@@ -255,7 +363,7 @@ namespace TrucksWeighingWebApp.Controllers
                 return NotFound();
             }
 
-            editRow.PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ","");
+            editRow.PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ", "");
             editRow.InitialWeight = vm.InitialWeight;
             editRow.FinalWeight = vm.FinalWeight;
 
@@ -287,7 +395,7 @@ namespace TrucksWeighingWebApp.Controllers
 
             await _context.SaveChangesAsync(ct);
 
-            return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
+            return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId, sortOrder, page, pageSize });
         }
 
 

@@ -69,23 +69,23 @@ namespace TrucksWeighingWebApp.Areas.Identity.Pages.Account
             Email = email;
 
 
-            var userId = await _userManager.GetUserIdAsync(user);
-            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            var callbackUrl = Url.Page(
-                "/Account/ConfirmEmail",
-                pageHandler: null,
-                values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
-                protocol: Request.Scheme);
+            //var userId = await _userManager.GetUserIdAsync(user);
+            //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            //code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            //var callbackUrl = Url.Page(
+            //    "/Account/ConfirmEmail",
+            //    pageHandler: null,
+            //    values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+            //    protocol: Request.Scheme);
 
-            await _sender.SendEmailAsync(email, "Confirm your email", $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+            //await _sender.SendEmailAsync(email, "Confirm your email", $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-            DisplayConfirmAccountLink = _webHostEnvironment.IsDevelopment();
+            //DisplayConfirmAccountLink = _webHostEnvironment.IsDevelopment();
 
-            if (DisplayConfirmAccountLink)
-            {
-                EmailConfirmationUrl = callbackUrl;
-            }
+            //if (DisplayConfirmAccountLink)
+            //{
+            //    EmailConfirmationUrl = callbackUrl;
+            //}
 
             // Once you add a real email sender, you should remove this code that lets you confirm the account
             //DisplayConfirmAccountLink = true;

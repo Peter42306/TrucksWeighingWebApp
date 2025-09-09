@@ -12,7 +12,7 @@ using TrucksWeighingWebApp.Data;
 namespace TrucksWeighingWebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250904085029_InitialCreate")]
+    [Migration("20250908173232_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -314,13 +314,18 @@ namespace TrucksWeighingWebApp.Migrations
 
                     b.Property<string>("PlateNumber")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("SerialNumber")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InspectionId");
+                    b.HasIndex("InspectionId", "PlateNumber");
 
-                    b.HasIndex("PlateNumber");
+                    b.HasIndex("InspectionId", "SerialNumber")
+                        .IsUnique();
 
                     b.ToTable("TruckRecords");
                 });

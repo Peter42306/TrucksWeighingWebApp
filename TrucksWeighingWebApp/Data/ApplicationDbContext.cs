@@ -50,9 +50,13 @@ namespace TrucksWeighingWebApp.Data
                     .WithMany(i => i.TruckRecords)
                     .HasForeignKey(r => r.InspectionId)
                     .OnDelete(DeleteBehavior.Cascade);
+                                
+                e.HasIndex(x => new { x.InspectionId, x.SerialNumber }).IsUnique();
+                e.HasIndex(x => new { x.InspectionId, x.PlateNumber });
 
-                e.HasIndex(x => x.InspectionId);
-                e.HasIndex(x => x.PlateNumber);
+                e.Property(x => x.SerialNumber).IsRequired();
+                e.Property(x => x.PlateNumber).HasMaxLength(64);
+
 
                 e.Property(x => x.InitialWeight).HasPrecision(18, 3);
                 e.Property(x => x.FinalWeight).HasPrecision(18, 3);                

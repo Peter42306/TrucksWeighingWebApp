@@ -11,6 +11,8 @@ namespace TrucksWeighingWebApp.Models
 
         
         public string PlateNumber { get; set; } = string.Empty;
+        public int SerialNumber { get; set; }
+
         
         public DateTime? InitialWeightAtUtc { get; set; }
         public decimal? InitialWeight { get; set; }

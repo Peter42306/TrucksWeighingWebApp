@@ -6,15 +6,20 @@ namespace TrucksWeighingWebApp.Services
 {
     public class SendGridEmailService : IEmailSender
     {
-        private readonly IConfiguration _config;
+        private readonly IConfiguration _config;        
+        private readonly ILogger<SendGridEmailService> _logger;
 
-        public SendGridEmailService(IConfiguration config)
+        public SendGridEmailService(IConfiguration config, ILogger<SendGridEmailService> logger)
         {
-            _config = config;
+            _config = config;            
+            _logger=logger;
         }
 
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
+            // Простой защитный лог — если увидите ДВА подряд для одного адреса/темы, дубль внутри приложения
+            _logger.LogWarning("SendGrid: sending to={Email}, subj={Subj}", email, subject);
+
             var apiKey = _config["SendGrid:ApiKey"];
 
             if (string.IsNullOrEmpty(apiKey))
@@ -37,9 +42,13 @@ namespace TrucksWeighingWebApp.Services
 
             if (!response.IsSuccessStatusCode)
             {
+
                 var body = await response.Body.ReadAsStreamAsync();
+                _logger.LogError("SendGrid error {Status}: {Body}", response.StatusCode, body);
                 throw new Exception($"SendGrid error {response.StatusCode}: {body}");
-            }            
+            }
+
+            _logger.LogInformation("SendGrid: delivered {Status}", response.StatusCode);
         }
     }
 }

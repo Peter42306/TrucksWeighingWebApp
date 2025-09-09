@@ -311,13 +311,18 @@ namespace TrucksWeighingWebApp.Migrations
 
                     b.Property<string>("PlateNumber")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("SerialNumber")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InspectionId");
+                    b.HasIndex("InspectionId", "PlateNumber");
 
-                    b.HasIndex("PlateNumber");
+                    b.HasIndex("InspectionId", "SerialNumber")
+                        .IsUnique();
 
                     b.ToTable("TruckRecords");
                 });
