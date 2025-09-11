@@ -81,13 +81,17 @@
                 @formatted
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Notes)
+                <span class="d-inline-block text-truncate" style="width: 15rem;">
+                    @item.Notes
+                </span>
+                
             </td>
-            <td>
+            <td class="text-nowrap">
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
                 @* <a asp-action="Details" asp-route-id="@item.Id">Details</a> | *@
                 <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
-                <a asp-controller="TruckRecords" asp-action="Index" asp-route-inspectionId="@item.Id">Trucks</a>
+                        <a asp-controller="TruckRecords" asp-action="Index" asp-route-inspectionId="@item.Id" class="text-nowrap">Trucks List</a> |
+                        <a asp-controller="TruckRecords" asp-action="Status" asp-route-inspectionId="@item.Id" class="text-nowrap">Trucks Status</a>
             </td>
         </tr>
 }

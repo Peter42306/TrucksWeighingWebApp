@@ -161,7 +161,8 @@ namespace TrucksWeighingWebApp.Controllers
                     vm.Edit = new TruckRecordEditViewModel
                     {
                         Id = editRow.Id,
-                        InspectionId = inspection.Id,
+                        InspectionId = inspection.Id,                        
+                        SerialNumber = editRow.SerialNumber,
                         PlateNumber = editRow.PlateNumber,
                         InitialWeight = editRow.InitialWeight,
                         InitialWeightAtUtc = ConvertToLocalTime(editRow.InitialWeightAtUtc),
@@ -263,8 +264,8 @@ namespace TrucksWeighingWebApp.Controllers
                     New = vm
                 };
 
-                //return View(nameof(Index), indexViewModel);
-                return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
+                return View(nameof(Index), indexViewModel);
+                //return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
             }
 
             var inspection = await _context.Inspections
@@ -332,14 +333,42 @@ namespace TrucksWeighingWebApp.Controllers
 
                 await tx.CommitAsync(ct);
             }
-            catch (Exception)
+            catch
             {
-                await tx.RollbackAsync(ct);
-                throw;
+                await tx.RollbackAsync(ct);                
+                TempData["error"] = "Cannot create record. Try again.";
+                return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
             }
 
             return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId, sortOrder, page, pageSize });
         }
+
+        //[HttpGet]
+        //public async Task<IActionResult>Edit(int id, CancellationToken ct)
+        //{
+        //    var truckRecord = await _context.TruckRecords
+        //        .AsNoTracking()
+        //        .FirstOrDefaultAsync(x => x.Id == id);
+
+        //    if (truckRecord is null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    var vm = new TruckRecordEditViewModel
+        //    {
+        //        Id = truckRecord.Id,
+        //        InspectionId = truckRecord.InspectionId,
+        //        SerialNumber = truckRecord.SerialNumber,
+        //        PlateNumber = truckRecord.PlateNumber,
+        //        InitialWeightAtUtc = truckRecord.InitialWeightAtUtc,
+        //        InitialWeight = truckRecord.InitialWeight,
+        //        FinalWeightAtUtc = truckRecord.FinalWeightAtUtc,
+        //        FinalWeight = truckRecord.FinalWeight
+        //    };
+
+        //    return View(vm);
+        //}
 
 
         [HttpPost]
@@ -351,18 +380,19 @@ namespace TrucksWeighingWebApp.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
+                return View(vm);
+                //return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
             }
 
             var editRow = await _context.TruckRecords
                 .Include(x => x.Inspection)
-                .FirstOrDefaultAsync(x => x.Id == vm.Id);
+                .FirstOrDefaultAsync(x => x.Id == vm.Id, ct);
 
             if (editRow == null)
             {
                 return NotFound();
             }
-
+                        
             editRow.PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ", "");
             editRow.InitialWeight = vm.InitialWeight;
             editRow.FinalWeight = vm.FinalWeight;
@@ -380,6 +410,10 @@ namespace TrucksWeighingWebApp.Controllers
                     editRow.InitialWeightAtUtc = DateTime.UtcNow;
                 }
             }
+            else
+            {
+                editRow.InitialWeightAtUtc = null;
+            }
 
             if (vm.FinalWeight.HasValue)
             {
@@ -392,6 +426,10 @@ namespace TrucksWeighingWebApp.Controllers
                     editRow.FinalWeightAtUtc = DateTime.UtcNow;
                 }
             }
+            else
+            {
+                editRow.FinalWeightAtUtc = null;
+            }
 
             await _context.SaveChangesAsync(ct);
 
@@ -401,6 +439,68 @@ namespace TrucksWeighingWebApp.Controllers
 
 
 
+        [HttpGet]
+        public async Task<IActionResult>Status(int inspectionId, CancellationToken ct)
+        {
+            var vm = await TruckRecordPierIndexViewModel.CreateAsync(_context, inspectionId, ct);
+            return View(vm);
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StartCargoOperations(int id, CancellationToken ct)
+        {
+            var t = await _context.TruckRecords.FindAsync(new object[] { id }, ct);
+            if (t == null) return NotFound();
+
+            if (t.InitialWeightAtUtc is null)
+            {
+                TempData["msgStartCargoOperations"] = "Initial weighing is required";
+                return RedirectToAction(nameof(Status), new { inspectionId = t.InspectionId });
+            }
+
+            if (t.InitialBerthAtUtc is null)
+            {
+                t.InitialBerthAtUtc = DateTime.UtcNow;
+                await _context.SaveChangesAsync(ct);
+                TempData["msgStartCargoOperations"] = $"#{t.SerialNumber} - {t.PlateNumber}: Cargo Operations started";
+            }
+            else
+            {
+                TempData["msgStartCargoOperations"] = $"#{t.SerialNumber} - {t.PlateNumber}: already saved as under Cargo Operations";
+            }
+
+            return RedirectToAction(nameof(Status), new { inspectionId = t.InspectionId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompleteCargoOperations(int id, CancellationToken ct)
+        {
+            var t = await _context.TruckRecords.FindAsync(new object[] { id }, ct);
+            if (t == null) return NotFound();
+
+            if (t.InitialBerthAtUtc is null)
+            {
+                TempData["msgCompleteCargoOperations"] = "Cargo Operations should be started";
+                return RedirectToAction(nameof(Status), new { inspectionId = t.InspectionId });
+            }
+
+            if (t.FinalBerthAtUtc is null)
+            {
+                t.FinalBerthAtUtc= DateTime.UtcNow;
+                await _context.SaveChangesAsync(ct);
+                TempData["msgCompleteCargoOperations"] = $"#{t.SerialNumber} - {t.PlateNumber}: Cargo Operations completed";
+            }
+            else
+            {
+                TempData["msgCompleteCargoOperations"] = $"#{t.SerialNumber} - {t.PlateNumber}: already saved as completed Cargo Operations";
+            }
+
+            return RedirectToAction(nameof(Status), new { inspectionId = t.InspectionId });
+
+        }
 
 
 

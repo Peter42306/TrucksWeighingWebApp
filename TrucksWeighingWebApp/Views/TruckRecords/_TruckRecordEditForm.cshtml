@@ -1,12 +1,15 @@
 ﻿@model TrucksWeighingWebApp.ViewModels.TruckRecordEditViewModel
 
-<h4>Edit truck @Model.PlateNumber</h4>
+<h4>Edit truck #@Model.SerialNumber - @Model.PlateNumber</h4>
 
 <form asp-action="Edit" method="post" class="row g-2 align-items-end">
     @Html.AntiForgeryToken()
 
-    <input asp-for="Id" type="hidden" />
-    <input asp-for="InspectionId" type="hidden" />
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="InspectionId" />
+    <input type="hidden" name="sortOrder" value="@(ViewData["SortOrder"])" />
+    <input type="hidden" name="page" value="@(ViewData["Page"])" />
+    <input type="hidden" name="pageSize" value="@(ViewData["PageSize"])" />
 
     <div class="col-lg-2">
         <label asp-for="PlateNumber" class="form-label"></label>

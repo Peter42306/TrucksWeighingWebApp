@@ -20,6 +20,11 @@ namespace TrucksWeighingWebApp.Models
         public DateTime? FinalWeightAtUtc { get; set; }
         public decimal? FinalWeight { get; set; }
 
+
+        public DateTime? InitialBerthAtUtc { get; set; } // Cargo Ops at berth Started
+        public DateTime? FinalBerthAtUtc { get; set; } // Cargo Ops at berth Finished
+        public string? BerthNote { get; set; }
+
         // Results
         [NotMapped]
         public decimal NetWeight 

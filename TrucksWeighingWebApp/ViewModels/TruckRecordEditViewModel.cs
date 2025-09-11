@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.ComponentModel.DataAnnotations;
 
 namespace TrucksWeighingWebApp.ViewModels
 {
@@ -9,6 +10,9 @@ namespace TrucksWeighingWebApp.ViewModels
 
         [Required]
         public int InspectionId { get; set; }
+
+        
+        public int SerialNumber { get; set; }
 
         [Required, StringLength(64)]
         public string PlateNumber { get; set; } = string.Empty;

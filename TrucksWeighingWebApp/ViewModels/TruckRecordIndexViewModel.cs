@@ -11,16 +11,16 @@ namespace TrucksWeighingWebApp.ViewModels
 
     public static class PageSizes
     {
-        public const int Default = 5;
-        public const int Small = 10;
+        public const int Small = 5;
+        public const int Default = 10;
         public const int Large = 50;
         public const int VeryLarge = 100;
         public const int All = int.MaxValue;
 
         public static IReadOnlyList<(int Value, string Label)> Options = new List<(int, string)>
         {
-            (Default, "5"),
-            (Small, "10"),            
+            (Small, "5"),
+            (Default, "10"),            
             (Large, "50"),
             (VeryLarge, "100"),
             (All, "All")
@@ -43,21 +43,7 @@ namespace TrucksWeighingWebApp.ViewModels
 
 
         public IReadOnlyList<TruckRecord> TruckRecords { get; set; } = Array.Empty<TruckRecord>();
-        //public List<TruckRecord> TruckRecords { get; set; } = new List<TruckRecord>();
-        //public IEnumerable<TruckRecord> TruckRecords { get; init; } = Enumerable.Empty<TruckRecord>();
-        //{
-        //    get
-        //    {
-        //        if (Inspection != null && Inspection.TruckRecords != null)
-        //        {
-        //            return Inspection.TruckRecords;
-        //        }
-        //        else
-        //        {
-        //            return Enumerable.Empty<TruckRecord>();
-        //        }
-        //    }
-        //}
+        
 
         // pagination
         public int Page { get; set; } = 1;          // 1-based

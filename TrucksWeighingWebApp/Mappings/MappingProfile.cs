@@ -42,6 +42,7 @@ namespace TrucksWeighingWebApp.Mappings
                 .ForMember(d => d.Id, o => o.Ignore())
                 .ForMember(d => d.InspectionId, o => o.Ignore())
                 .ForMember(d => d.Inspection, o => o.Ignore())
+                .ForMember(d => d.SerialNumber, o => o.Ignore())
                 .ForMember(d => d.PlateNumber, o => o.MapFrom(s => s.PlateNumber.Trim().ToUpperInvariant()));
             
             CreateMap<TruckRecord, TruckRecordEditViewModel>();

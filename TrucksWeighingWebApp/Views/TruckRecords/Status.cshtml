@@ -1,0 +1,227 @@
+﻿@model TrucksWeighingWebApp.ViewModels.TruckRecordPierIndexViewModel
+
+@{
+    ViewData["Title"] = "Trucks Status";
+    string T(DateTime? dt) => dt.HasValue ? dt.Value.ToLocalTime().ToString("HH:mm") : "-";
+    string TD(DateTime? dt) => dt.HasValue ? dt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm") : "-";
+    string D(TimeSpan? ts) => ts.HasValue ?
+        (ts.Value.TotalHours >=24
+            ? $"{(int)ts.Value.TotalDays}d {ts.Value:hh\\:mm}"
+            : ts.Value.ToString(@"hh\:mm"))
+        : "-";
+}
+
+<h1 id="anchor-trucks-status">Trucks Status</h1>
+<hr />
+
+@if (TempData["msgStartCargoOperations"] is string msgStartCargoOperations)
+{
+    <div class="alert alert-warning mt-2">
+        @msgStartCargoOperations
+    </div>
+}
+
+@if (TempData["msgCompleteCargoOperations"] is string msgCompleteCargoOperations)
+{
+    <div class="alert alert-warning mt-2">
+        @msgCompleteCargoOperations
+    </div>
+}
+
+
+<h5>
+    <span>
+        @Model.AfterInitialWeighingToCargoOps.Count truck@(Model.AfterInitialWeighingToCargoOps.Count == 1 ? "" : "s"):
+    </span>
+
+    <span class="d-none d-sm-inline">
+        Initial Weighing -> Cargo Operations
+    </span>
+    <span class="d-inline d-sm-none">
+        Initial Weighing -> Cargo Ops
+    </span>
+</h5>
+<div class="table-responsive mb-3">
+    <table class="table">
+        <thead>
+            <tr class="text-nowrap">
+                <th>#</th>
+                <th>Plate Number</th>
+                <th>Initial Weighing</th>
+                <th>Cargo Operations Started</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.AfterInitialWeighingToCargoOps)
+            {
+                <tr class="text-nowrap">
+                    <td>@item.SerialNumber</td>
+                    <td>@item.PlateNumber</td>
+                    <td>@TD(item.InitialWeightAtUtc)</td>
+                    <td>
+                        <form asp-action="StartCargoOperations" method="post">
+                            @Html.AntiForgeryToken()                            
+                            <input type="hidden" name="id" value="@item.Id"/>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       title="Start"
+                                       onchange="this.closest('form').submit()"
+                                       @(item.InitialWeightAtUtc == null ? "disabled" : null) />
+                            </div>                            
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.AfterInitialWeighingToCargoOps.Any())
+            {
+                <tr class="text-nowrap">
+                    <td colspan="4" class="text-center text-muted">No trucks</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+<h5>
+    <span>
+        @Model.UnderCargoOperations.Count truck@(Model.UnderCargoOperations.Count == 1 ? "" : "s"):
+    </span>
+
+    <span class="d-none d-sm-inline">
+        under Cargo Operations
+    </span>
+    <span class="d-inline d-sm-none">
+        under Cargo Ops
+    </span>
+</h5>
+<div class="table-responsive mb-3">
+    <table class="table">
+        <thead>
+            <tr class="text-nowrap">
+                <th>#</th>
+                <th>Plate Number</th>
+                <th>Cargo Operations Started</th>
+                <th>Cargo Operations Finished</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.UnderCargoOperations)
+            {
+                <tr class="text-nowrap">
+                    <td>@item.SerialNumber</td>
+                    <td>@item.PlateNumber</td>
+                    <td>@TD(item.InitialBerthAtUtc)</td>
+                    <td>
+                        <form asp-action="CompleteCargoOperations" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id"/>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                        type="checkbox"
+                                        title="Finish"
+                                        onchange="this.closest('form').submit()"
+                                        @(item.InitialBerthAtUtc == null ? "disable" : null)/>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.UnderCargoOperations.Any())
+            {
+                <tr class="text-nowrap">
+                    <td colspan="4" class="text-center text-muted">No trucks</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+<h5>
+    <span>
+        @Model.AfterCargoOpsToFinalWeighing.Count truck@(Model.AfterCargoOpsToFinalWeighing.Count == 1 ? "" : "s"):
+    </span>
+
+    <span class="d-none d-sm-inline">
+        Cargo Operations -> Final Weighing
+    </span>
+    <span class="d-inline d-sm-none">
+        Cargo Ops -> Final Weighing
+    </span>
+</h5>
+
+<div class="table-responsive mb-3">
+    <table class="table">
+        <thead>
+            <tr class="text-nowrap">
+                <th>#</th>
+                <th>Plate Number</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.AfterCargoOpsToFinalWeighing)
+            {
+                <tr class="text-nowrap">
+                    <td>@item.SerialNumber</td>
+                    <td>@item.PlateNumber</td>
+                </tr>
+            }
+            @if (!Model.AfterCargoOpsToFinalWeighing.Any())
+            {
+                <tr class="text-nowrap">
+                    <td colspan="2" class="text-center text-muted">No trucks</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+<h5>@Model.AfterFinalWeighing.Count trucks: after Final Weighing</h5>
+<div class="table-responsive mb-3">
+    <table class="table">
+        <thead>
+            <tr class="text-nowrap">
+                <th>#</th>
+                <th>Plate Number</th>
+                <th>Initial Weighing</th>
+                <th><small>Duration</small></th>
+                <th>Cargo Operations Started</th>
+                <th><small>Duration</small></th>
+                <th>Cargo Operations Finished</th>
+                <th><small>Duration</small></th>
+                <th>Final Weighing</th>
+                <th><small>Duration</small></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.AfterFinalWeighing)
+            {
+                <tr class="text-nowrap">
+                    <td>@item.SerialNumber</td>
+                    <td>@item.PlateNumber</td>
+                    <td>@TD(item.InitialWeighing)</td>
+                    <td><div class="text-muted small">@D(item.DurationInitialWeighingToCargoOpsStarted)</div></td>
+                    <td>@TD(item.CargoOpsStarted)</td>
+                    <td><div class="text-muted small">@D(item.DurationCargoOpsStartedToCargoOpsFinished)</div></td>
+                    <td>@TD(item.CargoOpsFinished)</td>
+                    <td><div class="text-muted small">@D(item.DurationCargoOpsFinishedToFinalWeighing)</div></td>
+                    <td>@TD(item.FinalWeighing)</td>
+                    <td><div class="text-muted small">@D(item.DurationTotal)</div></td>
+                </tr>
+            }
+            @if (!Model.AfterFinalWeighing.Any())
+            {
+                <tr>
+                    <td colspan="10" class="text-center text-muted">No trucks</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<a asp-action="Index" asp-controller="Inspections">To Inspections</a> |
+<a asp-action="Index" asp-controller="TruckRecords" asp-route-inspectionId="@Model.Inspection.Id">To Trucks List</a> |
+<a href="#anchor-trucks-status">To the top</a>
