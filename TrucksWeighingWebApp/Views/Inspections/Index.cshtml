@@ -1,4 +1,5 @@
-﻿@model IEnumerable<TrucksWeighingWebApp.Models.Inspection>
+﻿@* @model IEnumerable<TrucksWeighingWebApp.Models.Inspection> *@
+@model IEnumerable<TrucksWeighingWebApp.ViewModels.InspectionIndexViewModel>
 
 @{
     ViewData["Title"] = "Index";    
@@ -13,7 +14,7 @@
 <div class="table-responsive">
 <table class="table">
     <thead>
-        <tr>
+        <tr class="text-nowrap">
             @if (User.IsInRole(RoleNames.Admin))
             {
                 <th>
@@ -34,7 +35,7 @@
                 @Html.DisplayNameFor(model => model.DeclaredTotalWeight)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
+                @Html.DisplayNameFor(model => model.CreatedAtLocal)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.TimeZoneId)
@@ -46,12 +47,13 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
+@foreach (var item in Model) 
+{
+        <tr class="text-nowrap">
             @if (User.IsInRole(RoleNames.Admin))
             {
                 <td>
-                @Html.DisplayFor(modelItem => item.ApplicationUser.Id)
+                @Html.DisplayFor(modelItem => item.ApplicationUser)
                 </td>
             }
             
@@ -69,7 +71,7 @@
                 @* @Html.DisplayFor(modelItem => item.DeclaredTotalWeight) *@
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
+                @item.CreatedAtLocal.ToString("yyyy-MM-dd HH:mm")
             </td>
             <td>
             @{
@@ -81,7 +83,7 @@
                 @formatted
             </td>
             <td>
-                <span class="d-inline-block text-truncate" style="width: 15rem;">
+                <span class="d-inline-block text-truncate" style="max-width: 15rem;">
                     @item.Notes
                 </span>
                 

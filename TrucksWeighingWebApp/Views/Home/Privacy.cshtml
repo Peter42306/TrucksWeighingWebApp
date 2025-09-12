@@ -1,6 +1,84 @@
 ﻿@{
     ViewData["Title"] = "Privacy Policy";
+    var appName = (string?)ViewBag.AppName ?? "Trucks Weighing Web App";
+    ViewData["Title"] = "Privacy Policy — " + appName;
+    ViewData["Description"] = $"How {appName} handles and protects your data.";
+    var canonicalUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/privacy";
 }
-<h1>@ViewData["Title"]</h1>
+@* <h1>@ViewData["Title"]</h1>
+<p>Use this page to detail your site's privacy policy.</p> *@
 
-<p>Use this page to detail your site's privacy policy.</p>
+@section Head {
+    <meta name="description" content="@ViewData["Description"]" />
+    <link rel="canonical" href="@canonicalUrl" />
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+        {
+          "@@context":"https://schema.org",
+          "@@type":"PrivacyPolicy",
+          "name":"Privacy Policy",
+          "url":"@canonicalUrl",
+          "publisher":{ "@@type":"Organization", "name":"@appName" }
+        }
+    </script>
+}
+
+<h1 class="mb-3">Privacy Policy</h1>
+<p class="text-muted">Last updated: @DateTime.UtcNow.ToString("MMMM yyyy")</p>
+
+<p>
+    This Privacy Policy explains how we handle personal information when you use <strong>@appName</strong>.
+</p>
+
+<h2 class="h5 mt-4">1. Information We Collect</h2>
+<ul>
+    <li><strong>Account Information:</strong> name, email address, and password provided during registration.</li>
+    <li><strong>Operational Data:</strong> data you enter into the app (e.g., inspections, truck records, survey data).</li>
+    <li><strong>Technical Data:</strong> basic logs (IP, browser, timestamps) for security and performance.</li>
+</ul>
+
+<h2 class="h5 mt-4">2. How We Use the Information</h2>
+<ul>
+    <li>To provide secure access and core functionality of the application.</li>
+    <li>To manage inspections, truck weighing records, and survey operations.</li>
+    <li>To improve reliability, performance, and user experience.</li>
+    <li>To contact you about your account or important updates.</li>
+</ul>
+
+<h2 class="h5 mt-4">3. Data Sharing</h2>
+<p>
+    We do <strong>not</strong> sell or share your personal data with third parties.
+    We may disclose data only if required by law or to protect the security of the system.
+</p>
+
+<h2 class="h5 mt-4">4. Cookies and Sessions</h2>
+<p>
+    The application uses cookies to keep you signed in and to improve usability.
+    We do not use marketing or tracking cookies.
+</p>
+
+<h2 class="h5 mt-4">5. Data Security</h2>
+<ul>
+    <li>Passwords are stored using secure hashing.</li>
+    <li>Access to data is restricted by authentication and user roles.</li>
+    <li>We apply reasonable technical and organizational measures to protect data.</li>
+</ul>
+
+<h2 class="h5 mt-4">6. Your Rights</h2>
+<ul>
+    <li>You can request deletion of your account and associated data.</li>
+    <li>You can update your profile information at any time.</li>
+    <li>Contact us if you need a data export or have privacy questions.</li>
+</ul>
+
+<h2 class="h5 mt-4">7. Contact</h2>
+<p>
+    Questions about this Privacy Policy? Please contact the application administrator.
+</p>
+
+<hr class="my-4" />
+<p class="small text-muted">
+    Note: If you reuse this page for another app (e.g., <em>Draught Survey Web App</em>),
+    set <code>ViewBag.AppName</code> in the controller or view to show the correct app name.
+</p>

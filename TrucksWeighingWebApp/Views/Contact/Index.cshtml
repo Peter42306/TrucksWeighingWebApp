@@ -1,0 +1,64 @@
+﻿@{
+    ViewData["Title"] = "Contact - Trucks Weighing Web App";
+}
+
+<div class="container mt-4">
+    <h1 class="h4 mb-3">Contact</h1>
+    <hr />
+
+    @if (TempData["FeedbackSent"] is string ok && !string.IsNullOrWhiteSpace(ok))
+    {
+        <div class="alert alert-success">@ok</div>
+    }
+
+
+
+    <p>
+        For support, requests for custom Excel templates with your company branding,
+        or other inquiries, please use the contact details below:
+    </p>
+
+    @* <h2 class="h4 mb-3">Direct contacts</h2> *@
+    <p>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg"
+             alt="gmail" width="20" height="20"
+             style="vertical-align:middle; margin-right:5px;" />
+        <a href="mailto:pzalizko@gmail.com">pzalizko@gmail.com</a><br />
+
+        <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
+             alt="Telegram" width="20" height="20"
+             style="vertical-align:middle; margin-right:5px;" />
+        <a href="https://t.me/Petr42306" target="_blank" rel="noopener">&#64;Petr42306</a><br />
+
+        @* <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+             alt="Telegram" width="20" height="20"
+             style="vertical-align:middle; margin-right:5px;" />
+        <a href="https://t.me/Petr42306" target="_blank" rel="noopener">&#64;Petr42306</a> *@
+
+    </p>
+
+
+    <p>
+        Use the form below to report issues or leave feedback.
+        Please include details like the page or action, what you expected, and what happened.
+    </p>
+
+   @*  <form asp-action="SendFeedback" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Message</label>
+            <textarea asp-for="Message" class="form-control" rows="5"></textarea>
+            <span asp-validation-for="Message" class="text-danger"></span>
+        </div>
+
+
+        <button type="submit" class="btn btn-outline-primary">Send</button>
+
+    </form> *@
+</div>
+
+@* @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+} *@

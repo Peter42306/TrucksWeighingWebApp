@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <Folder Include="Interfaces\" />
+    <Folder Include="wwwroot\images\og\" />
   </ItemGroup>
 
 </Project>

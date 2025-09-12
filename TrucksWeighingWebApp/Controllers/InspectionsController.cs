@@ -42,25 +42,60 @@ namespace TrucksWeighingWebApp.Controllers
                 query = query.Include(x => x.ApplicationUser);
             }
             else
-            {
-                var currentUserId = _userManager.GetUserId(User);
-                query = query.Where(x => x.ApplicationUserId == currentUserId);
+            {                
+                query = query.Where(x => x.ApplicationUserId == _userManager.GetUserId(User));
             }
 
-                //if (User.IsInRole(RoleNames.User))
-                //{
-                //    var currentUserId = _userManager.GetUserId(User);
-                //    query = query.Where(x => x.ApplicationUserId == currentUserId);
-                //}
-                //else if (User.IsInRole(RoleNames.Admin))
-                //{
-                //    query = query.Include(x => x.ApplicationUser);
-                //}
+            //if (User.IsInRole(RoleNames.User))
+            //{
+            //    var currentUserId = _userManager.GetUserId(User);
+            //    query = query.Where(x => x.ApplicationUserId == currentUserId);
+            //}
+            //else if (User.IsInRole(RoleNames.Admin))
+            //{
+            //    query = query.Include(x => x.ApplicationUser);
+            //}
 
 
-                var inspections = await query
-                    .OrderByDescending(x => x.CreatedAt)
-                    .ToListAsync(ct);
+            var inspections = await query
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new InspectionIndexViewModel
+                {
+                    Id = x.Id,
+                    ApplicationUser = x.ApplicationUser.Email,
+                    Vessel = x.Vessel,
+                    Cargo = x.Cargo,
+                    Place = x.Place,
+                    DeclaredTotalWeight = x.DeclaredTotalWeight,
+                    CreatedAtUtc = x.CreatedAt,
+                    TimeZoneId = x.TimeZoneId,
+                    Notes = x.Notes
+                })
+                .ToListAsync(ct);
+
+            var tzCache = new Dictionary<string, TimeZoneInfo>(StringComparer.OrdinalIgnoreCase);
+            TimeZoneInfo GetTz(string id)
+            {
+                if (!tzCache.TryGetValue(id, out var tz))
+                {
+                    try
+                    {
+                        tz = TimeZoneInfo.FindSystemTimeZoneById(id);
+                    }
+                    catch
+                    {
+                        tz = TimeZoneInfo.Utc;
+                    }
+                    tzCache[id] = tz;
+                }
+                return tz;                
+            }
+
+            foreach (var item in inspections)
+            {
+                item.CreatedAtLocal = TimeZoneInfo.ConvertTimeFromUtc(item.CreatedAtUtc, GetTz(item.TimeZoneId));
+            }
+
 
             return View(inspections);
         }
