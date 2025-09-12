@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Ignore all images in wwwroot/images
+wwwroot/images/**
+
+# Keep the placeholder file so the folder stays in the repository
+!wwwroot/images/.gitkeep
