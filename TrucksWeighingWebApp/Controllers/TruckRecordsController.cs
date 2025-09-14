@@ -67,6 +67,7 @@ namespace TrucksWeighingWebApp.Controllers
             SortOrder sortOrder = SortOrder.Descending, 
             int page = 1, 
             int pageSize = PageSizes.Default, // 10, 50, int.MaxValue
+            [FromQuery(Name = "weighRange")] WeighRangeFilterViewModel? weighRange = null,
             CancellationToken ct=default)
         {
             var inspection = await _context.Inspections
@@ -88,6 +89,15 @@ namespace TrucksWeighingWebApp.Controllers
             var query = _context.TruckRecords
                 .AsNoTracking()
                 .Where(i => i.InspectionId == inspectionId);
+
+
+            // validation of WeighRangeFilterViewModel
+            TryValidateModel(weighRange);
+            if (ModelState.IsValid)
+            {
+
+            }
+
 
             var totalTrucks = await query.CountAsync(ct);
 

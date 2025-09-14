@@ -43,7 +43,9 @@ namespace TrucksWeighingWebApp.ViewModels
 
 
         public IReadOnlyList<TruckRecord> TruckRecords { get; set; } = Array.Empty<TruckRecord>();
-        
+
+        // filter for showing FROM time till TO time 
+        public WeighRangeFilterViewModel WeighRangeFilter { get; set; } = new();
 
         // pagination
         public int Page { get; set; } = 1;          // 1-based
