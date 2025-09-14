@@ -363,7 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Ignore all images in wwwroot/images
-**wwwroot/images/**
-
-# Keep the placeholder file so the folder stays in the repository
-!**wwwroot/images/.gitkeep
+**/wwwroot/images/**
+!**/wwwroot/images/.gitkeep
+!**/wwwroot/images/*/.gitkeep
