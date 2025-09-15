@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TrucksWeighingWebApp.Data;
 using TrucksWeighingWebApp.Infrastructure.Identity;
+using TrucksWeighingWebApp.Infrastructure.TimeZone;
 using TrucksWeighingWebApp.Models;
 using TrucksWeighingWebApp.ViewModels;
 
@@ -67,7 +68,7 @@ namespace TrucksWeighingWebApp.Controllers
             SortOrder sortOrder = SortOrder.Descending, 
             int page = 1, 
             int pageSize = PageSizes.Default, // 10, 50, int.MaxValue
-            [FromQuery(Name = "weighRange")] WeighRangeFilterViewModel? weighRange = null,
+            [FromQuery(Name = "weighingRange")] WeighRangeFilterViewModel? weighingRange = null,
             CancellationToken ct=default)
         {
             var inspection = await _context.Inspections
@@ -91,11 +92,24 @@ namespace TrucksWeighingWebApp.Controllers
                 .Where(i => i.InspectionId == inspectionId);
 
 
+            weighingRange ??= new WeighRangeFilterViewModel();
+
             // validation of WeighRangeFilterViewModel
-            TryValidateModel(weighRange);
+            TryValidateModel(weighingRange);
             if (ModelState.IsValid)
             {
+                var tzId = string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId;
+                var (fromUtc, toUtc) = weighingRange.ToUtc(tzId);
 
+                if (fromUtc.HasValue)
+                {
+                    query = query.Where(t => t.InitialWeightAtUtc >= fromUtc);
+                }
+
+                if (toUtc.HasValue)
+                {
+                    query = query.Where(t => t.FinalWeightAtUtc.HasValue && t.FinalWeightAtUtc <= toUtc);
+                }
             }
 
 
@@ -146,7 +160,8 @@ namespace TrucksWeighingWebApp.Controllers
 
                 Page = page,
                 PageSize = effectivePageSize,
-                TotalCount = totalTrucks
+                TotalCount = totalTrucks,
+                WeighRangeFilter = weighingRange
             };
 
             
@@ -164,8 +179,8 @@ namespace TrucksWeighingWebApp.Controllers
                             return null;
                         }
 
-                        var tz = TimeZoneInfo.FindSystemTimeZoneById(inspection.TimeZoneId);
-                        return TimeZoneInfo.ConvertTimeFromUtc(utc.Value, tz);
+                        var tz = Tz.Get(inspection.TimeZoneId);
+                        return Tz.FromUtc(utc.Value, tz);
                     }
 
                     vm.Edit = new TruckRecordEditViewModel

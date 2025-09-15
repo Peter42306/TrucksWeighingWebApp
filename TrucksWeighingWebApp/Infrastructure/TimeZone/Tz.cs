@@ -21,7 +21,7 @@
 
 		public static DateTime FromUtc(DateTime utc, TimeZoneInfo tz)
 		{
-			return TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Unspecified), tz);
+			return TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), tz);
 		}
     }
 }

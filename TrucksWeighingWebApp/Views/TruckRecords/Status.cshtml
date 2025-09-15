@@ -11,8 +11,28 @@
         : "-";
 }
 
-<h1 id="anchor-trucks-status">Trucks Status</h1>
+
+<div class="row">
+    <div class="col-7">
+        <h1 id="anchor-trucks-status">Trucks Status</h1>
+    </div>
+    <div class="col-5 d-flex justify-content-end align-items-center">
+        <a href="@Url.Action("Index", "TruckRecords", new { inspectionId = Model.Inspection.Id })#anchor-results">Results</a>        
+    </div>
+</div>
 <hr />
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small mb-0">
+        <li class="breadcrumb-item">
+            <a asp-controller="Inspections" asp-action="Index">Inspections</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-controller="TruckRecords" asp-action="Index" asp-route-inspectionId="@Model.Inspection.Id">Trucks List</a>            
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Trucks Status</li>
+    </ol>
+</nav>
 
 @if (TempData["msgStartCargoOperations"] is string msgStartCargoOperations)
 {
@@ -66,7 +86,7 @@
                                 <input class="form-check-input"
                                        type="checkbox"
                                        title="Start"
-                                       onchange="this.closest('form').submit()"
+                                       onchange="const cb=this; cb.disabled=true; setTimeout(() => this.closest('form').submit(), 600)"
                                        @(item.InitialWeightAtUtc == null ? "disabled" : null) />
                             </div>                            
                         </form>
@@ -119,10 +139,10 @@
                             <input type="hidden" name="id" value="@item.Id"/>
                             <div class="form-check form-switch">
                                 <input class="form-check-input"
-                                        type="checkbox"
-                                        title="Finish"
-                                        onchange="this.closest('form').submit()"
-                                        @(item.InitialBerthAtUtc == null ? "disable" : null)/>
+                                       type="checkbox"
+                                       title="Finish"
+                                       onchange="const cb=this; cb.disabled=true; setTimeout(() => this.closest('form').submit(), 600)"
+                                       @(item.InitialBerthAtUtc == null ? "disabled" : null) />
                             </div>
                         </form>
                     </td>
@@ -222,6 +242,4 @@
     </table>
 </div>
 
-<a asp-action="Index" asp-controller="Inspections">To Inspections</a> |
-<a asp-action="Index" asp-controller="TruckRecords" asp-route-inspectionId="@Model.Inspection.Id">To Trucks List</a> |
 <a href="#anchor-trucks-status">To the top</a>

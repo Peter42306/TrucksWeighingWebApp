@@ -44,11 +44,15 @@
     <div class="col-lg-2">
         <div class="row g-1">
             <div class="col-6">
-                <button class="btn btn-primary w-100">Save</button>
+                <button type="submit"
+                        class="btn btn-primary w-100"
+                        onclick="this.disabled = true; setTimeout(() => this.form.submit(), 300);">
+                    Save
+                </button>
             </div>
             <div class="col-6">
                 <a class="btn btn-secondary w-100" asp-action="Index" asp-route-inspectionId="@Model.InspectionId">Cancel</a>
             </div>
-        </div>                
+        </div>
     </div>
 </form>
