@@ -37,7 +37,7 @@ namespace TrucksWeighingWebApp.ViewModels
                 : (DateTime?)null;
 
             DateTime? to = ToLocal.HasValue
-                ? Tz.ToUtc(ToLocal.Value, tz)
+                ? Tz.ToUtc(ToLocal.Value, tz).AddMinutes(1).AddTicks(-1)
                 : (DateTime?)null;
 
             return (from, to);

@@ -245,7 +245,7 @@ else
         </div>
 
         <div class="col-6 col-lg-auto">
-            <a asp-action="Index" asp-route-inspectionId="@Model.Inspection.Id" class="btn btn-secondary w-100">Cansel</a>
+            <a asp-action="Index" asp-route-inspectionId="@Model.Inspection.Id" class="btn btn-secondary w-100">Cancel</a>
         </div>
     </form>
     
@@ -328,7 +328,7 @@ else
 
 
 
-<h4 id="anchor-results" class="mt-2">Results:</h4>
+<h5 id="anchor-results" class="mt-2">Results:</h5>
 <p>
     B/L figure: <strong>@Model.Inspection.DeclaredTotalWeight?.ToString("F3")</strong> mt<br />
     Trucks weight control figure: <strong>@Model.Inspection.WeighedTotalWeight.ToString("F3")</strong> mt<br />
