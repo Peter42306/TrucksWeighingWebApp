@@ -1,5 +1,6 @@
 ﻿@using TrucksWeighingWebApp.ViewModels
 @using TrucksWeighingWebApp.Infrastructure.TimeZone
+@using TrucksWeighingWebApp.Services.Export
 @model TrucksWeighingWebApp.ViewModels.TruckRecordIndexViewModel
 @* @model IEnumerable<TrucksWeighingWebApp.Models.TruckRecord> *@
 
@@ -324,10 +325,6 @@ else
 }
 
 
-
-
-
-
 <h5 id="anchor-results" class="mt-2">Results:</h5>
 <p>
     B/L figure: <strong>@Model.Inspection.DeclaredTotalWeight?.ToString("F3")</strong> mt<br />
@@ -338,8 +335,158 @@ else
 
 
 <div class="d-flex justify-content-between align-items-center">
-    <a href="#anchor-trucks-list">To the top</a>
-    <button type="button" class="btn btn-secondary">Export to PDF</button>
+    <div>
+        <a href="#anchor-trucks-list">To the top</a>
+    </div>
+    <div>
+        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exportPdfModal">Export to PDF</button>
+        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exportExcelModal">Export to Excel</button>
+    </div>
+
+    
+</div>
+
+
+<!-- Modal Export to PDF -->
+<div class="modal fade" id="exportPdfModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Export to PDF</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form asp-action="ExportToPdf" method="get">
+
+                <input type="hidden" name="InspectionId" value="@Model.Inspection.Id" />
+
+                <div class="modal-body">
+
+                    <!-- Show times? -->
+                    <div class="form-check form-switch">
+                        <input type="checkbox" 
+                            name="IncludeTimes" 
+                            class="form-check-input" 
+                            role="switch" 
+                            id="includeTimesPdf"
+                            value="true" 
+                            checked />
+                        <input type="hidden" name="IncludeTimes" value="false" />
+                        
+                        <label class="form-check-label" for="includeTimesPdf">Show times?</label>
+                    </div>
+
+                    <!-- Export All? -->
+                    <div class="form-check form-switch">
+                        <input type="checkbox" 
+                            name="PrintAll" 
+                            class="form-check-input"
+                            role="switch"
+                            id="printAllPdf"
+                            value="true" 
+                            checked
+                            onchange="document.getElementById('dateTimeRangePdf').classList.toggle('d-none',this.checked);" />
+                        <input type="hidden" name="PrintAll" value="false" />                        
+                        <label class="form-check-label" for="printAllPdf">Export all?</label>
+                    </div>
+
+                    <div id="dateTimeRangePdf" class="row g-2 mt-2 d-none">
+                        <div class="col-6">
+                            <label class="form-label mb-1" for="rangeFromPdf">From</label>
+                            <input id="rangeFromPdf"
+                                   type="datetime-local"
+                                   name="WeighRangeFilter.FromLocal"
+                                   class="form-control"
+                                   value="@(Model.WeighRangeFilter?.FromLocal?.ToString("yyyy-MM-ddTHH\\:mm") ?? string.Empty)" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label mb-1" for="rangeToPdf">To</label>
+                            <input id="rangeToPdf"
+                                   type="datetime-local"
+                                   name="WeighRangeFilter.ToLocal"
+                                   class="form-control"
+                                   value="@(Model.WeighRangeFilter?.ToLocal?.ToString("yyyy-MM-ddTHH\\:mm") ?? string.Empty)" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Export</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Modal Export to Excel -->
+<div class="modal fade" id="exportExcelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Export to Excel</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form asp-action="ExportToExcel" method="get">
+                
+                <input type="hidden" name="InspectionId" value="@Model.Inspection.Id" />
+
+                <div class="modal-body">
+
+                    <!-- Show times? -->
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="IncludeTimes" value="false" />
+                        <input class="form-check-input" type="checkbox" role="switch" name="IncludeTimes" id="includeTimesExcel" value="true" checked />
+                        <label class="form-check-label" for="includeTimesExcel">Show times?</label>
+                    </div>
+
+                    <!-- Export All? -->
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="PrintAll" value="false" />
+                        <input class="form-check-input" type="checkbox" role="switch" name="PrintAll" id="printAllExcel" value="true" checked
+                               onchange="document.getElementById('dateTimeRangeExcel').classList.toggle('d-none',this.checked);" />
+                        <label class="form-check-label" for="printAllExcel">Export all?</label>
+                    </div>
+
+                    <div id="dateTimeRangeExcel" class="row g-2 mt-2 d-none">
+                        <div class="col-6">
+                            <label class="form-label mb-1" for="rangeFromExcel">From</label>
+                            <input id="rangeFromExcel"
+                                   type="datetime-local"
+                                   name="WeighRangeFilter.FromLocal"
+                                   class="form-control"
+                                   value="@(Model.WeighRangeFilter?.FromLocal?.ToString("yyyy-MM-ddTHH\\:mm") ?? string.Empty)" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label mb-1" for="rangeToPdf">To</label>
+                            <input id="rangeToPdf"
+                                   type="datetime-local"
+                                   name="WeighRangeFilter.ToLocal"
+                                   class="form-control"
+                                   value="@(Model.WeighRangeFilter?.ToLocal?.ToString("yyyy-MM-ddTHH\\:mm") ?? string.Empty)" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Export</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
 </div>
 
 
@@ -349,7 +496,9 @@ else
 <div class="collapse" id="collapsePrintPeriod">
 
     <form method="get" class="row align-items-end justify-content-end">
+        @Html.AntiForgeryToken()
         <input type="hidden" name="inspectionId" value="@Model.Inspection.Id" />
+
         <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
         <input type="hidden" name="page" value="1" />
         <input type="hidden" name="pageSize" value="@Model.PageSize" />

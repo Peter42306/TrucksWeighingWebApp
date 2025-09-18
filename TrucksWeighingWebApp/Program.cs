@@ -12,6 +12,7 @@ using TrucksWeighingWebApp.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using TrucksWeighingWebApp.Services.Auth;
+using TrucksWeighingWebApp.Services.Export;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +58,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Email
 builder.Services.AddTransient<IEmailSender, SendGridEmailService>();
 
+// Excel export
+builder.Services.AddSingleton<ITruckExcelExporter, TruckExcelExporter>();
+
+// QuestPDF licence
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 // Automapper
 builder.Services.AddAutoMapper(typeof(InspectionProfile));
 
@@ -64,6 +71,7 @@ builder.Services.AddAutoMapper(typeof(InspectionProfile));
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddMemoryCache();
+
 
 var app = builder.Build();
 

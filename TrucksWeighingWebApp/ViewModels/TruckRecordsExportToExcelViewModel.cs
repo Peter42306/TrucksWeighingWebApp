@@ -2,7 +2,7 @@
 
 namespace TrucksWeighingWebApp.ViewModels
 {
-    public class ExportToExcelViewModel : IValidatableObject
+    public class TruckRecordsExportToExcelViewModel : IValidatableObject
     {
         public int InspectionId { get; set; }
 

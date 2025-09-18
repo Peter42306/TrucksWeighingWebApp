@@ -1,18 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using TrucksWeighingWebApp.Data;
+using TrucksWeighingWebApp.DTOs.Export;
 using TrucksWeighingWebApp.Infrastructure.Identity;
 using TrucksWeighingWebApp.Infrastructure.TimeZone;
 using TrucksWeighingWebApp.Models;
+using TrucksWeighingWebApp.Services.Export;
 using TrucksWeighingWebApp.ViewModels;
+using System.IO;
 
 namespace TrucksWeighingWebApp.Controllers
 {
@@ -22,15 +27,22 @@ namespace TrucksWeighingWebApp.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
+        private readonly ITruckExcelExporter _excel;
+        private readonly IWebHostEnvironment _env;
+        
 
         public TruckRecordsController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            IMapper mapper)
+            IMapper mapper,
+            ITruckExcelExporter excel,
+            IWebHostEnvironment env)
         {
             _context = context;
             _userManager = userManager;
             _mapper = mapper;
+            _excel = excel;
+            _env = env;
         }
 
         [HttpGet]
@@ -526,6 +538,213 @@ namespace TrucksWeighingWebApp.Controllers
             return RedirectToAction(nameof(Status), new { inspectionId = t.InspectionId });
 
         }
+
+
+
+        [HttpGet]        
+        public async Task<IActionResult> ExportToExcel(TruckRecordsExportToExcelViewModel vm, CancellationToken ct)
+        {
+            if (!TryValidateModel(vm))
+            {
+                return BadRequest("Invalid export parameter");
+            }
+
+            //if (!ModelState.IsValid)
+            //{
+            //    return RedirectToAction(nameof(Index), new { inspectionId = vm.InspectionId });
+            //}
+
+            var inspection = await _context.Inspections
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == vm.InspectionId, ct);
+
+            if (inspection == null || !await HasAccessAsync(inspection))
+            {
+                return NotFound();
+            }           
+
+
+            var query = _context.TruckRecords
+                .AsNoTracking()
+                .Where(t => t.InspectionId == vm.InspectionId);
+
+            // period of weighing From - To
+            if (!vm.PrintAll && vm.WeighRangeFilter is not null)
+            {
+                var timeZoneId = string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId;
+
+                var (fromUtc, toUtc) = vm.WeighRangeFilter.ToUtc(timeZoneId);
+
+                if (fromUtc.HasValue)
+                {
+                    query = query.Where(t => t.InitialWeightAtUtc >= fromUtc.Value);
+                }
+
+                if (toUtc.HasValue)
+                {
+                    query = query.Where(t => t.FinalWeightAtUtc <= toUtc.Value);
+                }
+            }
+
+            var row = await query.OrderBy(t => t.Id).ToListAsync(ct);
+
+            var tz = Tz.Get(string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId);
+
+            DateTime? ToLocal(DateTime? utc)
+            {
+                if (utc.HasValue)
+                {
+                    return Tz.FromUtc(utc.Value, tz);
+                }
+                else
+                {
+                    return (DateTime?)null;
+                }
+            }
+
+            var truckRows = row.Select((truck, index) => new TruckRowDto
+            {
+                SerialNumber = truck.SerialNumber,
+                PlateNumber = truck.PlateNumber,
+                InitialWeight = truck.InitialWeight,
+                InitialWeighingLocal = ToLocal(truck.InitialWeightAtUtc),
+                FinalWeight = truck.FinalWeight,
+                FinalWeighingLocal = ToLocal(truck.FinalWeightAtUtc),
+                NetWeight = truck.NetWeight
+            }).ToList();
+
+            var dto = new TrucksExcelDto
+            {
+                Inspection = inspection,
+                ShowTimes = vm.IncludeTimes,
+                RowsDto = truckRows
+            };
+
+            var bytes = _excel.BuildTruckWorkbook(dto);
+
+            string fileName = vm.PrintAll
+                ? $"Trucks_{inspection.Id}_All.xlsx"
+                : $"Trucks_{inspection.Id}_{vm.WeighRangeFilter?.FromLocal:yyyyMMdd-HHmm}_{vm.WeighRangeFilter?.ToLocal:yyyyMMdd-HHmm}.xlsx";
+
+            return File(
+                bytes, 
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+                fileName);
+
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> ExportToPdf(TruckRecordsExportToExcelViewModel vm, CancellationToken ct)
+        {
+            if (!TryValidateModel(vm))
+            {
+                return BadRequest("Invalid export parameter");
+            }
+
+            var inspection = await _context.Inspections
+                .AsNoTracking()
+                .Include(i => i.TruckRecords)
+                .FirstOrDefaultAsync(i => i.Id == vm.InspectionId, ct);
+
+            if (inspection == null || !await HasAccessAsync(inspection))
+            {
+                return NotFound();
+            }
+
+            var query = _context.TruckRecords
+                .AsNoTracking()
+                .Where(t => t.InspectionId == vm.InspectionId);
+
+            // period of weighing From - To
+            if (!vm.PrintAll && vm.WeighRangeFilter is not null)
+            {
+                var timeZoneId = string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId;
+
+                var (fromUtc, toUtc) = vm.WeighRangeFilter.ToUtc(timeZoneId);
+
+                if (fromUtc.HasValue)
+                {
+                    query = query.Where(t => t.InitialWeightAtUtc >= fromUtc.Value);
+                }
+
+                if (toUtc.HasValue)
+                {
+                    query = query.Where(t => t.FinalWeightAtUtc <= toUtc.Value);
+                }
+            }
+
+            var rows = await query.OrderBy(t => t.Id).ToListAsync(ct);
+
+            var tz = Tz.Get(string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId);
+
+            DateTime? ToLocal(DateTime? utc)
+            {
+                if (utc.HasValue)
+                {
+                    return Tz.FromUtc(utc.Value, tz);
+                }
+                else
+                {
+                    return (DateTime?)null;
+                }
+            }
+
+            var truckRows = rows.Select((truck, index) => new TruckRowDto
+            {
+                SerialNumber = truck.SerialNumber,
+                PlateNumber = truck.PlateNumber,
+                InitialWeight = truck.InitialWeight,
+                InitialWeighingLocal = ToLocal(truck.InitialWeightAtUtc),
+                FinalWeight = truck.FinalWeight,
+                FinalWeighingLocal = ToLocal(truck.FinalWeightAtUtc),
+                NetWeight = truck.NetWeight
+            }).ToList();
+
+            var dto = new TrucksExcelDto
+            {
+                Inspection = inspection,
+                ShowTimes = vm.IncludeTimes,
+                RowsDto = truckRows
+            };
+
+            byte[]? logo = null;
+            var path = Path.Combine(_env.WebRootPath, "images", "logo", "logo_CISS.png");
+            if (System.IO.File.Exists(path))
+            {
+                logo = await System.IO.File.ReadAllBytesAsync(path, ct);
+            }
+            // logo = await System.IO.File.ReadAllBytesAsync("wwwroot/img/company-logo.png", ct);
+
+            var doc = new TruckPdfExporter(dto, logo);
+            var pdfBytes = doc.GeneratePdf();
+
+            var name = vm.PrintAll 
+                ? $"Tally_{inspection.Id}_All.pdf" 
+                : $"Tally_{inspection.Id}_{vm.WeighRangeFilter?.FromLocal:yyyyMMdd-HHmm}_{vm.WeighRangeFilter?.ToLocal:yyyyMMdd-HHmm}.pdf";
+
+            return File(
+                pdfBytes, 
+                "application/pdf", 
+                name);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
