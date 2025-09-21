@@ -33,7 +33,7 @@
 </nav>
 
 
-@if (Model.Edit ==null)
+@if (Model.Edit == null)
 {
     @await Html.PartialAsync(
         "_TruckRecordCreateForm", 
@@ -215,13 +215,23 @@ else
     </table>
 </div>
 
-<div class="collapse" id="collapseShowPeriod">    
+<!-- Show period, trucks, weight -->
+@{
+    bool fromInvalid = ViewData.ModelState["weighingRange.FromLocal"]?.Errors.Any() == true;
+    bool toInvalid = ViewData.ModelState["weighingRange.ToLocal"]?.Errors.Any() == true;
 
-    <form method="get" class="row g-2 align-items-end justify-content-end">
+    bool keepOpen = !ViewData.ModelState.IsValid || Model.WeighRangeFilter.FromLocal.HasValue == true || Model.WeighRangeFilter.ToLocal.HasValue == true;
+}
+
+<div class="collapse @(keepOpen ? "show" : "")" id="collapseShowPeriod">        
+
+    <form method="get"
+          action="@($"{Url.Action("Index","TruckRecords")}#anchor-intermediate-results")"
+          class="row g-2 align-items-end justify-content-end">
         <input type="hidden" name="inspectionId" value="@Model.Inspection.Id" />
         <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
         <input type="hidden" name="page" value="1" />
-        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+        <input type="hidden" name="pageSize" value="@Model.PageSize" />               
 
         <div class="col-6 col-lg-auto">
             <label class="form-label m-0" for="wr_FromLocal">From</label>
@@ -241,6 +251,7 @@ else
                    value="@(Model.WeighRangeFilter?.ToLocal?.ToString("yyyy-MM-ddTHH:mm") ?? "")" />
         </div>
 
+
         <div class="col-6 col-lg-auto">
             <button type="submit" class="btn btn-primary w-100">Apply</button>
         </div>
@@ -248,9 +259,23 @@ else
         <div class="col-6 col-lg-auto">
             <a asp-action="Index" asp-route-inspectionId="@Model.Inspection.Id" class="btn btn-secondary w-100">Cancel</a>
         </div>
-    </form>
-    
+
+        <div class="col-12">
+            @Html.ValidationSummary(false, "", new { @class = "text-danger small mb-2" })
+        </div>
+    </form>   
+
 </div>
+
+
+@if (ViewData.ModelState.IsValid && (Model.WeighRangeFilter.FromLocal.HasValue || Model.WeighRangeFilter.ToLocal.HasValue))
+{
+    <h5 id="anchor-intermediate-results" class="mt-2">Selected period results:</h5>
+    <p>
+        From @(Model.WeighRangeFilter.FromLocal?.ToString("yyyy-MM-dd HH:mm") ?? " the beginning ") till @(Model.WeighRangeFilter.ToLocal?.ToString("yyyy-MM-dd HH:mm") ?? " the latest entry")<br />
+        <strong>@Model.PeriodStats.Weight.ToString("F3")</strong> mt in <strong>@Model.PeriodStats.Trucks</strong> trucks for period<br />
+    </p>
+}
 
 
 @if (Model.TotalPages > 1)
@@ -340,7 +365,7 @@ else
     </div>
     <div>
         <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exportPdfModal">Export to PDF</button>
-        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exportExcelModal">Export to Excel</button>
+        @* <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exportExcelModal">Export to Excel</button> *@
     </div>
 
     
@@ -354,7 +379,7 @@ else
 
             <div class="modal-header">
                 <h5 class="modal-title">Export to PDF</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <form asp-action="ExportToPdf" method="get">
@@ -364,7 +389,7 @@ else
                 <div class="modal-body">
 
                     <!-- Show times? -->
-                    <div class="form-check form-switch">
+                    @* <div class="form-check form-switch">
                         <input type="checkbox" 
                             name="IncludeTimes" 
                             class="form-check-input" 
@@ -375,7 +400,7 @@ else
                         <input type="hidden" name="IncludeTimes" value="false" />
                         
                         <label class="form-check-label" for="includeTimesPdf">Show times?</label>
-                    </div>
+                    </div> *@
 
                     <!-- Export All? -->
                     <div class="form-check form-switch">
@@ -427,7 +452,7 @@ else
 
 
 <!-- Modal Export to Excel -->
-<div class="modal fade" id="exportExcelModal" tabindex="-1" aria-hidden="true">
+@* <div class="modal fade" id="exportExcelModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
 
@@ -488,7 +513,7 @@ else
         </div>
     </div>
 </div>
-
+ *@
 
 
 
@@ -496,7 +521,7 @@ else
 <div class="collapse" id="collapsePrintPeriod">
 
     <form method="get" class="row align-items-end justify-content-end">
-        @Html.AntiForgeryToken()
+        @* @Html.AntiForgeryToken() *@
         <input type="hidden" name="inspectionId" value="@Model.Inspection.Id" />
 
         <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
@@ -504,19 +529,19 @@ else
         <input type="hidden" name="pageSize" value="@Model.PageSize" />
 
         <div class="col-auto">
-            <label class="form-label m-0" for="wr_FromLocal">From</label>
+            <label class="form-label m-0" for="wr_FromLocal_Print">From</label>
             <input type="datetime-local"
                    class="form-control"
-                   id="wr_FromLocal"
+                   id="wr_FromLocal_Print"
                    name="weighingRange.FromLocal"
                    value="@(Model.WeighRangeFilter?.FromLocal?.ToString("yyyy-MM-ddTHH:mm") ?? "")" />
         </div>
 
         <div class="col-auto">
-            <label class="form-label m-0" for="wr_ToLocal">To</label>
+            <label class="form-label m-0" for="wr_ToLocal_Print">To</label>
             <input type="datetime-local"
                    class="form-control"
-                   id="wr_ToLocal"
+                   id="wr_ToLocal_Print"
                    name="weighingRange.ToLocal"
                    value="@(Model.WeighRangeFilter?.ToLocal?.ToString("yyyy-MM-ddTHH:mm") ?? "")" />
         </div>
@@ -539,47 +564,7 @@ else
 
 
 
-@section Scripts {
+@* @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
-    <script>
-        (function() {
-          const input = document.getElementById("plate");
-          const list  = document.getElementById("plate-suggestions");
-          const inspId = document.querySelector('input[name="InspectionId"]').value;
-
-          if (!input || !list) return;
-
-          input.addEventListener("input", async () => {
-            const q = (input.value || "").trim();
-            if (q.length < 1) { list.style.display="none"; list.innerHTML=""; return; }
-
-            const res = await fetch(`/TruckRecords/PlateHints?inspectionId=${inspId}&q=${encodeURIComponent(q)}`);
-            if (!res.ok) return;
-
-            const items = await res.json();
-            if (!items.length) { list.style.display="none"; list.innerHTML=""; return; }
-
-            list.innerHTML = "";
-            for (const p of items) {
-              const li = document.createElement("li");
-              li.className = "list-group-item list-group-item-action";
-              li.textContent = p;
-              li.addEventListener("click", () => {
-                input.value = p;
-                list.style.display = "none";
-                list.innerHTML = "";
-              });
-              list.appendChild(li);
-            }
-            list.style.display = "block";
-          });
-
-          document.addEventListener("click", (e) => {
-            if (!list.contains(e.target) && e.target !== input) {
-              list.style.display = "none";
-            }
-          });
-        })();
-    </script>
-}
+   
+} *@

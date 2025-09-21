@@ -11,6 +11,8 @@ namespace TrucksWeighingWebApp.ViewModels
 
         public WeighRangeFilterViewModel WeighRangeFilter { get; set; } = new();
 
+        public PeriodStatsViewModel PeriodStats { get; set; } = new();
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (!PrintAll)

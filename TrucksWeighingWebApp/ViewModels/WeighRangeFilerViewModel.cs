@@ -16,7 +16,7 @@ namespace TrucksWeighingWebApp.ViewModels
             {
                 yield return new ValidationResult(
                     "Initial Weighing cannot be later than Final Weighing",
-                    new[] { nameof(FromLocal), nameof(ToLocal) });
+                    new[] { nameof(FromLocal)});
             }
         }
 

@@ -186,23 +186,52 @@ namespace TrucksWeighingWebApp.Services.Export
                 .ShowEntire()
                 .Column(col =>
                 {
-                    //col.Item().PaddingBottom(10).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
-                    col.Item().Text(txt =>
+                    if (_dto.PeriodStats != null && _dto.PeriodStats.IsSelected)
                     {
-                        txt.Span("B/L figure: ");
-                        txt.Span($"{_dto.Inspection.DeclaredTotalWeight:F3} mt");
-                    });
+                        col.Item().Text(txt =>
+                        {
+                            txt.Span("Period from: ");
+                            txt.Span($"{_dto.PeriodStats?.FromLocal?.ToString("yyyy-MM-dd HH:mm") ?? "the beginning"}");
+                            txt.Span(" till ");
+                            txt.Span($"{_dto.PeriodStats?.ToLocal?.ToString("yyyy-MM-dd HH:mm") ?? "the latest entry"}");
+                        });
 
-                    col.Item().Text(txt =>
-                    {                        
-                        txt.Span("Trucks weight control figure: ");
-                        txt.Span($"{_dto.Inspection.WeighedTotalWeight:F3} mt");
-                    });
+                        col.Item().Text(txt =>
+                        {
+                            txt.Span("Trucks weight control figure: ");
+                            txt.Span($"{_dto.PeriodStats?.Weight:F3} mt");
+                        });
 
-                    if (_dto.Inspection.DeclaredTotalWeight.HasValue)
-                    {
-                        col.Item().Text($"Difference: {_dto.Inspection.DifferenceWeight:F3} mt or {_dto.Inspection.DifferencePercent:F3} %");
+                        col.Item().Text(txt =>
+                        {
+                            txt.Span("Total trucks : ");
+                            txt.Span($"{_dto.PeriodStats?.Trucks}");
+                        });
+                        
                     }
+                    else
+                    {
+                        //col.Item().PaddingBottom(10).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
+                        col.Item().Text(txt =>
+                        {
+                            txt.Span("B/L figure: ");
+                            txt.Span($"{_dto.Inspection.DeclaredTotalWeight:F3} mt");
+                        });
+
+                        col.Item().Text(txt =>
+                        {
+                            txt.Span("Trucks weight control figure: ");
+                            txt.Span($"{_dto.Inspection.WeighedTotalWeight:F3} mt");
+                        });
+
+                        if (_dto.Inspection.DeclaredTotalWeight.HasValue)
+                        {
+                            col.Item().Text($"Difference: {_dto.Inspection.DifferenceWeight:F3} mt or {_dto.Inspection.DifferencePercent:F3} %");
+                        }
+                    }
+
+
+                    
 
                     // Sugnatures
                     col.Item().PaddingTop(30).Table(table =>

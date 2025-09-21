@@ -11,11 +11,61 @@
     <input type="hidden" name="page" value="@(ViewData["Page"])" />
     <input type="hidden" name="pageSize" value="@(ViewData["PageSize"])" />
 
-    <div class="col-lg-2">
+    
+    <div class="col-lg-2 position-relative">
         <label asp-for="PlateNumber" class="form-label"></label>
-        <input asp-for="PlateNumber" class="form-control" />
-        <span asp-validation-for="PlateNumber" class="text-danger d-none"></span>
+        <input asp-for="PlateNumber" id="plate-edit" class="form-control" autocomplete="off"/>
+        <ul id="plate-edit-suggestions"
+            class="list-group position-absolute w-100"
+            style="z-index:1000; max-height:200px; overflow-y:auto; display:none;">
+
+        </ul>
+        @* <span asp-validation-for="PlateNumber" class="text-danger d-none"></span> *@
     </div>
+
+    <script>
+        (function() {
+          const input = document.getElementById("plate-edit");
+          const list  = document.getElementById("plate-edit-suggestions");
+
+
+          if (!input || !list) return;
+
+          const form = input.closest("form");
+          const inspId = form?.querySelector('input[name="InspectionId"]')?.value ?? "";
+
+          input.addEventListener("input", async () => {
+            const q = (input.value || "").trim();
+            if (q.length < 1) { list.style.display="none"; list.innerHTML=""; return; }
+
+            const res = await fetch(`/TruckRecords/PlateHints?inspectionId=${inspId}&q=${encodeURIComponent(q)}`);
+            if (!res.ok) return;
+
+            const items = await res.json();
+            if (!items.length) { list.style.display="none"; list.innerHTML=""; return; }
+
+            list.innerHTML = "";
+            for (const p of items) {
+              const li = document.createElement("li");
+              li.className = "list-group-item list-group-item-action";
+              li.textContent = p;
+              li.addEventListener("click", () => {
+                input.value = p;
+                list.style.display = "none";
+                list.innerHTML = "";
+              });
+              list.appendChild(li);
+            }
+            list.style.display = "block";
+          });
+
+          document.addEventListener("click", (e) => {
+            if (!list.contains(e.target) && e.target !== input) {
+              list.style.display = "none";
+            }
+          });
+        })();
+    </script>
 
     <div class="col-6 col-lg-2">
         <label asp-for="InitialWeight" class="form-label"></label>
@@ -25,7 +75,7 @@
 
     <div class="col-6 col-lg-2">
         <label asp-for="InitialWeightAtUtc" class="form-label"></label>
-        <input asp-for="InitialWeightAtUtc" class="form-control" type="datetime-local" value="@Model.InitialWeightAtUtc?.ToString("yyyy-MM-dd HH:mm")" />
+        <input asp-for="InitialWeightAtUtc" class="form-control" type="datetime-local"/>
         <span asp-validation-for="InitialWeightAtUtc" class="text-danger"></span>
     </div>
 
@@ -37,7 +87,7 @@
 
     <div class="col-6 col-lg-2">
         <label asp-for="FinalWeightAtUtc" class="form-label"></label>
-        <input asp-for="FinalWeightAtUtc" class="form-control" type="datetime-local" value="@Model.FinalWeightAtUtc?.ToString("yyyy-MM-dd HH:mm")" />
+        <input asp-for="FinalWeightAtUtc" class="form-control" type="datetime-local"/>
         <span asp-validation-for="FinalWeightAtUtc" class="text-danger"></span>
     </div>
 

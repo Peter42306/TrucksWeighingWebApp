@@ -47,6 +47,9 @@ namespace TrucksWeighingWebApp.ViewModels
         // filter for showing FROM time till TO time 
         public WeighRangeFilterViewModel WeighRangeFilter { get; set; } = new();
 
+        // Stats for perioid 
+        public PeriodStatsViewModel PeriodStats { get; set; } = new();
+
         // pagination
         public int Page { get; set; } = 1;          // 1-based
         public int PageSize { get; set; } = PageSizes.Default;     // 10, 50, "All" = int.MaxValue

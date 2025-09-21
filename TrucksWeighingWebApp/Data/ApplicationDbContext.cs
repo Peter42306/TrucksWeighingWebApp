@@ -9,6 +9,7 @@ namespace TrucksWeighingWebApp.Data
         public DbSet<UserSession> UserSessions { get; set; }        
         public DbSet<Inspection> Inspections { get; set; }
         public DbSet<TruckRecord> TruckRecords { get; set; }
+        public DbSet<UserLogo> UserLogos { get; set; }
 
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)

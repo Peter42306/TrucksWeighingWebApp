@@ -10,6 +10,9 @@ namespace TrucksWeighingWebApp.Models
         public required string ApplicationUserId { get; set; }
         public required ApplicationUser ApplicationUser { get; set; }
 
+        public int? UserLogoId { get; set; }
+        public UserLogo? UserLogo { get; set; }
+
 
         public string? Vessel { get; set; }
         public string? Cargo { get; set; }

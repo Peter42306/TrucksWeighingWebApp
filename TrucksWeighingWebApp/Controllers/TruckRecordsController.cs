@@ -18,6 +18,7 @@ using TrucksWeighingWebApp.Models;
 using TrucksWeighingWebApp.Services.Export;
 using TrucksWeighingWebApp.ViewModels;
 using System.IO;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace TrucksWeighingWebApp.Controllers
 {
@@ -107,7 +108,7 @@ namespace TrucksWeighingWebApp.Controllers
             weighingRange ??= new WeighRangeFilterViewModel();
 
             // validation of WeighRangeFilterViewModel
-            TryValidateModel(weighingRange);
+            TryValidateModel(weighingRange, prefix: "weighingRange");
             if (ModelState.IsValid)
             {
                 var tzId = string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId;
@@ -124,8 +125,15 @@ namespace TrucksWeighingWebApp.Controllers
                 }
             }
 
-
+            // for pagination
             var totalTrucks = await query.CountAsync(ct);
+
+            // for trucks & weight in period
+            var queryCompletedTrucks = query.Where(t => t.InitialWeight.HasValue && t.FinalWeight.HasValue);
+
+            var trucksForPeriod = await queryCompletedTrucks.CountAsync(ct);
+
+            decimal weightForPeriod = await queryCompletedTrucks.SumAsync(t => (decimal?)Math.Abs(t.FinalWeight!.Value - t.InitialWeight!.Value), ct) ?? 0m;
 
 
             // sorting
@@ -159,10 +167,10 @@ namespace TrucksWeighingWebApp.Controllers
                     .ToListAsync(ct);                
             }
 
-            
 
 
-            // new row in table
+
+            // 
             var vm = new TruckRecordIndexViewModel
             {
                 Inspection=inspection,
@@ -173,7 +181,9 @@ namespace TrucksWeighingWebApp.Controllers
                 Page = page,
                 PageSize = effectivePageSize,
                 TotalCount = totalTrucks,
-                WeighRangeFilter = weighingRange
+                WeighRangeFilter = weighingRange,
+
+                PeriodStats = new PeriodStatsViewModel { Trucks = trucksForPeriod, Weight = weightForPeriod }
             };
 
             
@@ -638,10 +648,10 @@ namespace TrucksWeighingWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToPdf(TruckRecordsExportToExcelViewModel vm, CancellationToken ct)
         {
-            if (!TryValidateModel(vm))
-            {
-                return BadRequest("Invalid export parameter");
-            }
+            //if (!TryValidateModel(vm))
+            //{
+            //    return BadRequest("Invalid export parameter");
+            //}
 
             var inspection = await _context.Inspections
                 .AsNoTracking()
@@ -653,14 +663,21 @@ namespace TrucksWeighingWebApp.Controllers
                 return NotFound();
             }
 
+            var timeZoneId = string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId;
+            var timeZone = Tz.Get(timeZoneId);
+
             var query = _context.TruckRecords
                 .AsNoTracking()
                 .Where(t => t.InspectionId == vm.InspectionId);
 
+            bool isPeriodSelected = 
+                !vm.PrintAll && 
+                (vm.WeighRangeFilter.FromLocal is not null || vm.WeighRangeFilter.ToLocal is not null);
+
             // period of weighing From - To
-            if (!vm.PrintAll && vm.WeighRangeFilter is not null)
+            if (isPeriodSelected && vm.WeighRangeFilter is not null)
             {
-                var timeZoneId = string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId;
+               
 
                 var (fromUtc, toUtc) = vm.WeighRangeFilter.ToUtc(timeZoneId);
 
@@ -675,15 +692,31 @@ namespace TrucksWeighingWebApp.Controllers
                 }
             }
 
-            var rows = await query.OrderBy(t => t.Id).ToListAsync(ct);
+            PeriodStatsViewModel? stats = null;
 
-            var tz = Tz.Get(string.IsNullOrWhiteSpace(inspection.TimeZoneId) ? "UTC" : inspection.TimeZoneId);
+            if (isPeriodSelected)
+            {
+                var queryPeriod = query.Where(t => t.InitialWeight.HasValue && t.FinalWeight.HasValue);
+
+                stats = new PeriodStatsViewModel
+                {
+                    Trucks = await queryPeriod.CountAsync(ct),
+                    Weight = await queryPeriod.SumAsync(t => (decimal?)Math.Abs(t.FinalWeight!.Value - t.InitialWeight!.Value), ct) ?? 0m,
+                    FromLocal = vm.WeighRangeFilter!.FromLocal,
+                    ToLocal = vm.WeighRangeFilter!.ToLocal
+                };
+            }
+            
+                        
+
+            var rows = await query.OrderBy(t => t.Id).ToListAsync(ct);   
+            
 
             DateTime? ToLocal(DateTime? utc)
             {
                 if (utc.HasValue)
                 {
-                    return Tz.FromUtc(utc.Value, tz);
+                    return Tz.FromUtc(utc.Value, timeZone);
                 }
                 else
                 {
@@ -706,7 +739,8 @@ namespace TrucksWeighingWebApp.Controllers
             {
                 Inspection = inspection,
                 ShowTimes = vm.IncludeTimes,
-                RowsDto = truckRows
+                RowsDto = truckRows,
+                PeriodStats = stats
             };
 
             byte[]? logo = null;
@@ -719,15 +753,13 @@ namespace TrucksWeighingWebApp.Controllers
 
             var doc = new TruckPdfExporter(dto, logo);
             var pdfBytes = doc.GeneratePdf();
+            var now = Tz.FromUtc(DateTime.UtcNow, timeZone);
 
             var name = vm.PrintAll 
-                ? $"Tally_{inspection.Id}_All.pdf" 
-                : $"Tally_{inspection.Id}_{vm.WeighRangeFilter?.FromLocal:yyyyMMdd-HHmm}_{vm.WeighRangeFilter?.ToLocal:yyyyMMdd-HHmm}.pdf";
+                ? $"Tally_{inspection.Vessel}_All.pdf" 
+                : $"Tally_{inspection.Vessel}_{now:yyyy-MM-dd-HHmm}_period_from_{vm.WeighRangeFilter?.FromLocal:yyyy-MM-dd-HHmm}_till_{vm.WeighRangeFilter?.ToLocal:yyyy-MM-dd-HHmm}.pdf";
 
-            return File(
-                pdfBytes, 
-                "application/pdf", 
-                name);
+            return File(pdfBytes, "application/pdf", name);
         }
 
 
