@@ -22,6 +22,18 @@ namespace TrucksWeighingWebApp.Data
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<UserLogo>(e =>
+            {
+                e.HasKey(x => x.Id);
+
+                e.HasIndex(x => new { x.ApplicationUserId, x.Name }).IsUnique();
+
+                e.HasOne(x => x.ApplicationUser)
+                    .WithMany()
+                    .HasForeignKey(x => x.ApplicationUserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             builder.Entity<UserSession>(e =>
             {
                 e.HasKey(x => x.Id);
@@ -43,6 +55,11 @@ namespace TrucksWeighingWebApp.Data
                     .WithMany()
                     .HasForeignKey(x => x.ApplicationUserId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne(x => x.UserLogo)
+                    .WithMany()
+                    .HasForeignKey(x => x.UserLogoId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             builder.Entity<TruckRecord>(e =>
