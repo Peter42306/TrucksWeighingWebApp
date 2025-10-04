@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using TrucksWeighingWebApp.Services.Auth;
 using TrucksWeighingWebApp.Services.Export;
+using TrucksWeighingWebApp.Services.Logos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +61,8 @@ builder.Services.AddTransient<IEmailSender, SendGridEmailService>();
 
 // Excel export
 builder.Services.AddSingleton<ITruckExcelExporter, TruckExcelExporter>();
+
+builder.Services.AddScoped<IUserLogoService, UserLogoService>();
 
 // QuestPDF licence
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;

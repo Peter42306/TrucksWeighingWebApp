@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using TrucksWeighingWebApp.Data;
 using TrucksWeighingWebApp.Infrastructure.Identity;
 using TrucksWeighingWebApp.Models;
+using TrucksWeighingWebApp.Services.Logos;
 using TrucksWeighingWebApp.ViewModels;
 
 namespace TrucksWeighingWebApp.Controllers
@@ -21,15 +22,18 @@ namespace TrucksWeighingWebApp.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
+        private readonly IUserLogoService _logoService;
 
         public InspectionsController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            IMapper mapper)
+            IMapper mapper,
+            IUserLogoService logoService)
         {
             _context = context;
             _userManager = userManager;
             _mapper = mapper;
+            _logoService = logoService;
         }
 
         // GET: Inspections
@@ -96,6 +100,11 @@ namespace TrucksWeighingWebApp.Controllers
                 item.CreatedAtLocal = TimeZoneInfo.ConvertTimeFromUtc(item.CreatedAtUtc, GetTz(item.TimeZoneId));
             }
 
+            var currentUserId = _userManager.GetUserId(User);
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                ViewBag.UserLogos = await _logoService.ListAsync(currentUserId, ct);
+            }
 
             return View(inspections);
         }
@@ -122,9 +131,22 @@ namespace TrucksWeighingWebApp.Controllers
         }
 
         // GET: Inspections/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create( CancellationToken ct)
         {
             FillTimeZone();
+
+            var vm = new InspectionCreateViewModel();
+            var uid = _userManager.GetUserId(User);
+
+            if (!string.IsNullOrEmpty(uid))
+            {
+                var logos = await _logoService.ListAsync(uid, ct);
+
+                vm.LogoOptions = logos
+                    .Select(l => (l.Id, $"{l.Name} ({l.Position}, {l.Height}, {l.PaddingBottom})",l.FilePath))
+                    .ToList();
+            }
+
             return View(new InspectionCreateViewModel());
         }
 
@@ -133,19 +155,37 @@ namespace TrucksWeighingWebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(InspectionCreateViewModel vm, CancellationToken ct)
         {
-            if (!ModelState.IsValid)
-            {
-                FillTimeZone(vm.TimeZoneId);
-                return View(vm);
-            }
-
-            var inspection = _mapper.Map<Inspection>(vm);
-
             var userId = _userManager.GetUserId(User);
             if (userId == null)
             {
                 return Forbid();
             }
+
+            if (vm.UserLogoId.HasValue)
+            {
+                var logo = await _logoService.GetAsync(vm.UserLogoId.Value, userId, ct);
+                if (logo == null)
+                {
+                    ModelState.AddModelError(nameof(vm.UserLogoId), "Invalid logo selection.");
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                FillTimeZone(vm.TimeZoneId);
+
+
+                var logos = await _logoService.ListAsync(userId, ct);
+                vm.LogoOptions = logos
+                    .Select(l => (l.Id, $"{l.Name} ({l.Position}, {l.Height}, {l.PaddingBottom})", l.FilePath))
+                    .ToList();
+
+                return View(vm);
+            }
+
+            var inspection = _mapper.Map<Inspection>(vm);
+
+            
             inspection.ApplicationUserId = userId;
 
             inspection.CreatedAt = DateTime.UtcNow;
@@ -246,6 +286,38 @@ namespace TrucksWeighingWebApp.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadLogo(
+            string name,
+            LogoPosition position,
+            int height,
+            int paddingBottom,
+            IFormFile file,
+            CancellationToken ct)
+        {
+            try
+            {
+                var uid = _userManager.GetUserId(User);
+                if (uid == null)
+                {
+                    return Forbid();
+                }
+
+                await _logoService.UploadAsync(uid, file, name, height, paddingBottom, position, ct);
+                TempData["Msg"] = "Logo uploaded.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Err"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+
+
 
         private bool InspectionExists(int id)
         {

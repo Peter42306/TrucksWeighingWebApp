@@ -31,6 +31,7 @@ namespace TrucksWeighingWebApp.Models
         [Required, MaxLength(512)]
         public required string FilePath { get; set; }
 
+        [Range(0, long.MaxValue)]
         public long FileSizeBytes { get; set; }
 
         [MaxLength(250)]
@@ -38,7 +39,7 @@ namespace TrucksWeighingWebApp.Models
 
 
         [Required, MaxLength(64)]
-        public required string ContentType { get; set; } // "image/png" | "image/jpeg" | "image/jpg"
+        public required string ContentType { get; set; } // "image/png" | "image/jpeg"
 
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
