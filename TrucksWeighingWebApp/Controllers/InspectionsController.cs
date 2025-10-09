@@ -143,11 +143,18 @@ namespace TrucksWeighingWebApp.Controllers
                 var logos = await _logoService.ListAsync(uid, ct);
 
                 vm.LogoOptions = logos
-                    .Select(l => (l.Id, $"{l.Name} ({l.Position}, {l.Height}, {l.PaddingBottom})",l.FilePath))
-                    .ToList();
+                    .Select(l => new LogoOptionsViewModel
+                    {
+                        Id = l.Id,
+                        Name = l.Name,
+                        Height = l.Height,
+                        PaddingBottom = l.PaddingBottom,
+                        Position = l.Position,
+                        FilePath = l.FilePath
+                    }).ToList();
             }
 
-            return View(new InspectionCreateViewModel());
+            return View(vm);
         }
 
         // POST: Inspections/Create        
@@ -164,6 +171,7 @@ namespace TrucksWeighingWebApp.Controllers
             if (vm.UserLogoId.HasValue)
             {
                 var logo = await _logoService.GetAsync(vm.UserLogoId.Value, userId, ct);
+
                 if (logo == null)
                 {
                     ModelState.AddModelError(nameof(vm.UserLogoId), "Invalid logo selection.");
@@ -176,19 +184,35 @@ namespace TrucksWeighingWebApp.Controllers
 
 
                 var logos = await _logoService.ListAsync(userId, ct);
+
                 vm.LogoOptions = logos
-                    .Select(l => (l.Id, $"{l.Name} ({l.Position}, {l.Height}, {l.PaddingBottom})", l.FilePath))
+                    .Select(l => new LogoOptionsViewModel
+                    {
+                        Id = l.Id,
+                        Name = l.Name,
+                        Height= l.Height,
+                        PaddingBottom= l.PaddingBottom,
+                        Position = l.Position,
+                        FilePath = l.FilePath
+                    })
                     .ToList();
 
                 return View(vm);
             }
-
-            var inspection = _mapper.Map<Inspection>(vm);
-
-            
-            inspection.ApplicationUserId = userId;
-
-            inspection.CreatedAt = DateTime.UtcNow;
+                        
+            var inspection = new Inspection
+            {
+                ApplicationUserId = userId,
+                ApplicationUser = null!,
+                UserLogoId = vm.UserLogoId,
+                Vessel = vm.Vessel,
+                Cargo = vm.Cargo,
+                Place = vm.Place,
+                DeclaredTotalWeight = vm.DeclaredTotalWeight,
+                TimeZoneId = string.IsNullOrWhiteSpace(vm.TimeZoneId) ? "UTC" : vm.TimeZoneId,
+                Notes = vm.Notes?.Trim(),
+                CreatedAt = DateTime.UtcNow
+            };            
 
             _context.Inspections.Add(inspection);
             await _context.SaveChangesAsync(ct);
@@ -216,11 +240,36 @@ namespace TrucksWeighingWebApp.Controllers
             if (!await HasAccessAsync(inspection))
             {
                 return NotFound();
-            }            
+            }
 
-            var vm = _mapper.Map<InspectionEditViewModel>(inspection);
+            var logoOwnerId = inspection.ApplicationUserId;
+            var logos = await _logoService.ListAsync(logoOwnerId, ct);
+
+
+            var vm = new InspectionEditViewModel
+            {
+                Id = inspection.Id,
+                Vessel = inspection.Vessel,
+                Cargo = inspection.Cargo,
+                Place = inspection.Place,
+                DeclaredTotalWeight= inspection.DeclaredTotalWeight,
+                TimeZoneId = inspection.TimeZoneId,
+                Notes = inspection.Notes,
+                UserLogoId = inspection.UserLogoId,
+                LogoOptions = logos
+                    .Select(l => new LogoOptionsViewModel
+                    {
+                        Id = l.Id,
+                        Name = l.Name,
+                        Height = l.Height,
+                        PaddingBottom = l.PaddingBottom,
+                        Position = l.Position,
+                        FilePath = l.FilePath
+                    }).ToList()
+            };
 
             FillTimeZone(vm.TimeZoneId);
+
             return View(vm);
         }
 
@@ -231,6 +280,29 @@ namespace TrucksWeighingWebApp.Controllers
         {
             if (!ModelState.IsValid)
             {
+                var logoOwnerId = await _context.Inspections
+                    .Where(i => i.Id == vm.Id)
+                    .Select(i => i.ApplicationUserId)
+                    .FirstOrDefaultAsync(ct);
+
+
+                var logos = logoOwnerId is null 
+                    ? new List<UserLogo>() 
+                    : await _logoService.ListAsync(logoOwnerId, ct);
+
+                vm.LogoOptions = logos
+                    .Select(l => new LogoOptionsViewModel
+                    {
+                        Id = l.Id,
+                        Name = l.Name,
+                        Height = l.Height,
+                        PaddingBottom = l.PaddingBottom,
+                        Position = l.Position,
+                        FilePath = l.FilePath
+                    }).ToList();
+
+                FillTimeZone(vm.TimeZoneId);
+
                 return View(vm);
             }
 
@@ -247,7 +319,49 @@ namespace TrucksWeighingWebApp.Controllers
                 return NotFound();
             }
 
-            _mapper.Map(vm, inspection);
+            // validation that logo belongs to user
+            if (vm.UserLogoId.HasValue)
+            {
+                var belongs = await _context.UserLogos
+                    .AsNoTracking()
+                    .AnyAsync(l => l.Id == vm.UserLogoId.Value && l.ApplicationUserId == inspection.ApplicationUserId, ct);
+
+                if (!belongs)
+                {
+                    ModelState.AddModelError(nameof(vm.UserLogoId), "Invalid logo selelction");
+
+                    var logos = await _context.UserLogos
+                        .AsNoTracking()
+                        .Where(l => l.ApplicationUserId == inspection.ApplicationUserId)
+                        .OrderBy(l => l.Name)
+                        .ToListAsync(ct);
+
+                    vm.LogoOptions = logos.Select(l => new LogoOptionsViewModel
+                    {
+                        Id = l.Id,
+                        Name = l.Name,
+                        Height = l.Height,
+                        PaddingBottom = l.PaddingBottom,
+                        Position = l.Position,
+                        FilePath = l.FilePath
+                    }).ToList();
+
+                    FillTimeZone(vm.TimeZoneId);
+
+                    return View(vm);
+                }
+            }
+
+            //_mapper.Map(vm, inspection);
+
+            inspection.Vessel = vm.Vessel;
+            inspection.Cargo = vm.Cargo;
+            inspection.Place = vm.Place;
+            inspection.DeclaredTotalWeight = vm.DeclaredTotalWeight;
+            inspection.TimeZoneId = vm.TimeZoneId;
+            inspection.Notes = vm.Notes;
+            inspection.UserLogoId = vm.UserLogoId;
+
             await _context.SaveChangesAsync(ct);
 
             return RedirectToAction(nameof(Index));
@@ -287,6 +401,8 @@ namespace TrucksWeighingWebApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // Logo
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadLogo(
@@ -297,20 +413,43 @@ namespace TrucksWeighingWebApp.Controllers
             IFormFile file,
             CancellationToken ct)
         {
-            try
+            var uid = _userManager.GetUserId(User);
+            if (uid == null)
             {
-                var uid = _userManager.GetUserId(User);
-                if (uid == null)
-                {
-                    return Forbid();
-                }
+                return Forbid();
+            }
 
+            try
+            {                
                 await _logoService.UploadAsync(uid, file, name, height, paddingBottom, position, ct);
                 TempData["Msg"] = "Logo uploaded.";
             }
             catch (Exception ex)
             {
                 TempData["Err"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteLogo(int id, CancellationToken ct)
+        {
+            var uid = _userManager?.GetUserId(User);
+            if (uid == null)
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                await _logoService.DeleteAsync(id, uid, ct);
+                TempData["Msg"] = "Logo deleted.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Err"] = ex.Message;                
             }
 
             return RedirectToAction(nameof(Index));

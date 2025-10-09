@@ -6,13 +6,14 @@
 
 <h1>Edit Inspection</h1>
 <hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit" method="post">
-            @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="Id" />
+
+    <div class="row">
+        <div class="col-12 col-md-4">
             <div class="form-group">
                 <label asp-for="Vessel" class="control-label"></label>
                 <input asp-for="Vessel" class="form-control" />
@@ -36,25 +37,76 @@
             <div class="form-group">
                 <label asp-for="TimeZoneId" class="control-label"></label>
                 <select asp-for="TimeZoneId" asp-items="ViewBag.TimeZones" class="form-select"></select>
-                
                 <span asp-validation-for="TimeZoneId" class="text-danger"></span>
             </div>
+
+            <div class="form-group">
+                <label class="control-label" for="logoSelect">Logo (optional)</label>
+                <select asp-for="UserLogoId" class="form-select" id="logoSelect">
+                    <option value="">- No logo -</option>
+                    @if (Model.LogoOptions != null)
+                    {
+                        foreach (var item in Model.LogoOptions)
+                        {
+                            var label = $"{item.Name} ({item.Height}, {item.PaddingBottom}, {item.Position})";
+                            <option value="@item.Id" data-path="@Url.Content("~/" + item.FilePath.TrimStart('/'))">@label</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="UserLogoId" class="text-danger"></span>
+                <div id="logoPreview" class="mt-2"></div>
+                @* <small class="form-text text-muted">
+                    List from the uploaded logos.
+                </small> *@
+
+            </div>
+        </div>
+
+                
+        <div class="col-12 col-md-8">
             <div class="form-group">
                 <label asp-for="Notes" class="control-label"></label>
-                <textarea asp-for="Notes" class="form-control"></textarea>
+                <textarea asp-for="Notes"
+                          class="form-control js-autosize"
+                          rows="16"
+                          maxlength="2000"
+                          style="overflow-y:auto; resize:vertical;"></textarea>
                 <span asp-validation-for="Notes" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
 
+        <div class="form-group">
+            <input type="submit" value="Save" class="btn btn-primary mt-3" />
+        </div>
+    </div>
+</form>
+        
 <div>
     <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+
+        // logo
+        (function(){
+            const ddl = document.getElementById('logoSelect');
+            const preview = document.getElementById('logoPreview');
+            function refreshPreview(){
+                const opt = ddl && ddl.selectedOptions ? ddl.selectedOptions[0] : null;
+                const url = opt ? opt.getAttribute('data-path') : null;
+                preview.innerHTML = url ? `<img src="${url}" class="img-fluid border rounded" />` : '';
+            }
+            if(ddl){
+                ddl.addEventListener('change', refreshPreview);
+                refreshPreview();
+            }
+        })();           
+
+
+    </script>
+    
 }

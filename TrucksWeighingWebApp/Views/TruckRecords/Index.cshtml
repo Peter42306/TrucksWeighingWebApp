@@ -88,13 +88,13 @@ else
                     class="form-select form-select-sm"
                     style="width:auto"
                     onchange="this.form.submit()">
-                @foreach (var option in Model.PageSizeOptions)
-                {
+                    @foreach (var option in Model.PageSizeOptions)
+                    {
                     <option value="@option.Value"
                             selected="@(option.Value == Model.PageSize ? "selected" : null)">
                         @option.Label
                     </option>
-                }
+                    }
             </select>
         </form>
     </div>

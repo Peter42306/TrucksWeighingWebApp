@@ -19,6 +19,7 @@ using TrucksWeighingWebApp.Services.Export;
 using TrucksWeighingWebApp.ViewModels;
 using System.IO;
 using Microsoft.EntityFrameworkCore.Query.Internal;
+using DocumentFormat.OpenXml.Office2010.Drawing;
 
 namespace TrucksWeighingWebApp.Controllers
 {
@@ -487,9 +488,13 @@ namespace TrucksWeighingWebApp.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult>Status(int inspectionId, CancellationToken ct)
+        public async Task<IActionResult> Status(
+            int inspectionId, 
+            int page = 1, 
+            int pageSize = PageSizesTrucksStatus.Default,
+            CancellationToken ct = default)
         {
-            var vm = await TruckRecordPierIndexViewModel.CreateAsync(_context, inspectionId, ct);
+            var vm = await TruckRecordPierIndexViewModel.CreateAsync(_context, inspectionId, page, pageSize, ct);
             return View(vm);
         }
 
@@ -656,6 +661,7 @@ namespace TrucksWeighingWebApp.Controllers
             var inspection = await _context.Inspections
                 .AsNoTracking()
                 .Include(i => i.TruckRecords)
+                .Include(i => i.UserLogo)
                 .FirstOrDefaultAsync(i => i.Id == vm.InspectionId, ct);
 
             if (inspection == null || !await HasAccessAsync(inspection))
@@ -744,12 +750,17 @@ namespace TrucksWeighingWebApp.Controllers
             };
 
             byte[]? logo = null;
-            var path = Path.Combine(_env.WebRootPath, "images", "logo", "logo_CISS.png");
-            if (System.IO.File.Exists(path))
+
+
+            if (inspection?.UserLogo is not null)
             {
-                logo = await System.IO.File.ReadAllBytesAsync(path, ct);
+                var abs = Path.Combine(_env.WebRootPath, inspection.UserLogo.FilePath.TrimStart('/'));
+                if (System.IO.File.Exists(abs))
+                {
+                    logo = await System.IO.File.ReadAllBytesAsync(abs, ct);
+                }
             }
-            // logo = await System.IO.File.ReadAllBytesAsync("wwwroot/img/company-logo.png", ct);
+            
 
             var doc = new TruckPdfExporter(dto, logo);
             var pdfBytes = doc.GeneratePdf();

@@ -68,14 +68,50 @@ namespace TrucksWeighingWebApp.Services.Export
 
             container.Column(col =>
             {
-                if (_logoBytes is not null)
+                var height = _dto.Inspection.UserLogo?.Height ?? 50; // DefaultHeight = 50 from UserLogo
+                var paddingBottom = _dto.Inspection.UserLogo?.PaddingBottom ?? 20; // DefaultPaddingBottom = 20 from UserLogo
+                var position = _dto.Inspection.UserLogo?.Position;
+
+                if (_logoBytes is not null && _logoBytes.Length > 0)
                 {
-                    col.Item()                        
-                        .PaddingBottom(20)
-                        .AlignLeft()
-                        .Height(50)
-                        .Image(_logoBytes)
-                        .FitHeight();
+                    
+
+
+                    switch (position)
+                    {
+                        case Models.LogoPosition.Center:
+                            col.Item()
+                                .PaddingBottom(paddingBottom)
+                                .AlignCenter()
+                                .Height(height)
+                                .Image(_logoBytes)
+                                .FitHeight();
+                            break;
+
+                        case Models.LogoPosition.Right:
+                            col.Item()
+                                .PaddingBottom(paddingBottom)
+                                .AlignRight()
+                                .Height(height)
+                                .Image(_logoBytes)
+                                .FitHeight();
+                            break;
+
+                        default:
+                            col.Item()
+                                .PaddingBottom(paddingBottom)
+                                .AlignLeft()
+                                .Height(height)
+                                .Image(_logoBytes)
+                                .FitHeight();
+                            break;
+                    }
+                    
+                }
+                else
+                {
+                    col.Item()
+                        .Height(height);
                 }
 
 

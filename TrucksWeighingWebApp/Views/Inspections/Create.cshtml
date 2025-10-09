@@ -17,33 +17,60 @@
                 <input asp-for="Vessel" class="form-control" />
                 <span asp-validation-for="Vessel" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Cargo" class="control-label"></label>
                 <input asp-for="Cargo" class="form-control" />
                 <span asp-validation-for="Cargo" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Place" class="control-label"></label>
                 <input asp-for="Place" class="form-control" type="number" step="0.001"/>
                 <span asp-validation-for="Place" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="DeclaredTotalWeight" class="control-label"></label>
                 <input asp-for="DeclaredTotalWeight" class="form-control" type="number" step="0.001"/>
                 <span asp-validation-for="DeclaredTotalWeight" class="text-danger"></span>
-            </div>            
+            </div>   
+            
             <div class="form-group">
                 <label asp-for="TimeZoneId" class="control-label"></label>
                 <select asp-for="TimeZoneId" asp-items="ViewBag.TimeZones" class="form-select"></select>                
                 <span asp-validation-for="TimeZoneId" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Notes" class="control-label"></label>
                 <textarea asp-for="Notes" class="form-control"></textarea>
                 <span asp-validation-for="Notes" class="text-danger"></span>
             </div>
+
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <label class="control-label" for="logoSelect">Logo (optional)</label>
+                <select asp-for="UserLogoId" class="form-select" id="logoSelect">
+                    <option value="">- No logo -</option>
+                    @if (Model.LogoOptions != null)
+                    {
+                        foreach (var item in Model.LogoOptions)
+                        {
+                            var label = $"{item.Name} ({item.Height}, {item.PaddingBottom}, {item.Position})";
+                            <option value="@item.Id" data-path="@Url.Content("~/" + item.FilePath.TrimStart('/'))">@label</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="UserLogoId" class="text-danger"></span>
+                <div id="logoPreview" class="mt-2"></div>
+                @* <small class="form-text text-muted">
+                    List from the uploaded logos.
+                </small> *@
+
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary mt-3" />
             </div>
         </form>
     </div>
@@ -55,4 +82,19 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        (function(){
+            const ddl = document.getElementById('logoSelect');
+            const preview = document.getElementById('logoPreview');
+            function refreshPreview(){
+                const opt = ddl && ddl.selectedOptions ? ddl.selectedOptions[0] : null;
+                const url = opt ? opt.getAttribute('data-path') : null;
+                preview.innerHTML = url ? `<img src="${url}" class="img-fluid border rounded" />` : '';
+            }
+            if(ddl){
+                ddl.addEventListener('change', refreshPreview);
+                refreshPreview();
+            }
+        })();
+    </script>
 }

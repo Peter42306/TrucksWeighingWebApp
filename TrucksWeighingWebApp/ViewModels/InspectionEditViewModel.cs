@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using TrucksWeighingWebApp.Models;
 
 namespace TrucksWeighingWebApp.ViewModels
 {
@@ -22,7 +23,23 @@ namespace TrucksWeighingWebApp.ViewModels
 
         public string TimeZoneId { get; set; } = "UTC";
 
-        [StringLength(128)]
+        [StringLength(2000)]
         public string? Notes { get; set; }
+        
+        public int? UserLogoId { get; set; }
+        
+        //public List<(int Id, string Text, string FilePath)> LogoOptions = new();
+
+        public List<LogoOptionsViewModel> LogoOptions { get; set; } = new();
+
+        //public class LogoOptionVm
+        //{
+        //    public int Id { get; set; }
+        //    public string Name { get; set; } = string.Empty;
+        //    public int Height { get; set; }
+        //    public int PaddingBottom { get; set; }
+        //    public LogoPosition Position { get; set; }
+        //    public string FilePath { get; set; } = string.Empty;
+        //}
     }
 }
