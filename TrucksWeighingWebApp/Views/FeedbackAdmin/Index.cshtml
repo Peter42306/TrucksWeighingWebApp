@@ -1,0 +1,36 @@
+﻿@model IEnumerable<TrucksWeighingWebApp.Models.FeedbackTicket>
+@{
+    ViewData["Title"] = "Feedback tickets";
+}
+
+<div class="container">
+    <h1 class="h4">Feedback tickets</h1>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="text-nowrap">Date (UTC)</th>
+                    <th class="text-nowrap">User (email)</th>
+                    <th class="text-nowrap">Message</th>
+                    <th class="text-nowrap">Admin Notes</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.CreatedUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@item.UserEmail</td>
+                        <td>@(item.Message.Length > 100 ? item.Message.Substring(0, 80) + "..." : item.Message)</td>
+                        <td>@(item.AdminNotes?.Length > 100 ? item.AdminNotes.Substring(0, 80) + "..." : item.AdminNotes)</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

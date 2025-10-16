@@ -4,7 +4,7 @@
     ViewData["Title"] = "Edit Inspection";
 }
 
-<h1>Edit Inspection</h1>
+<h1>Inspection Details</h1>
 <hr />
 
 <form asp-action="Edit" method="post">
@@ -75,15 +75,14 @@
             </div>
         </div>
 
-        <div class="form-group">
-            <input type="submit" value="Save" class="btn btn-primary mt-3" />
+
+        <div class="d-flex mt-2">
+            <input type="submit" value="Save" class="btn btn-primary" />
+            <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
         </div>
-    </div>
-</form>
         
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+    </div>
+</form>        
 
 @section Scripts {
     @{

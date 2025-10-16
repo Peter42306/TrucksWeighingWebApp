@@ -10,6 +10,7 @@ namespace TrucksWeighingWebApp.Data
         public DbSet<Inspection> Inspections { get; set; }
         public DbSet<TruckRecord> TruckRecords { get; set; }
         public DbSet<UserLogo> UserLogos { get; set; }
+        public DbSet<FeedbackTicket> FeedbackTickets { get; set; }
 
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -21,6 +22,28 @@ namespace TrucksWeighingWebApp.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<FeedbackTicket>(e =>
+            {
+                e.HasKey(x => x.Id);
+
+                // columns
+                e.Property(x => x.ApplicationUserId).IsRequired();
+                e.Property(x => x.UserEmail).IsRequired().HasMaxLength(256);
+                e.Property(x => x.Message).IsRequired().HasMaxLength(4000);
+                e.Property(x => x.AdminNotes).HasMaxLength(2000);
+                e.Property(x => x.CreatedUtc).HasColumnType("timestamp without time zone").HasDefaultValueSql("timezone('utc', now())");
+
+                // for sorting
+                e.HasIndex(x => x.CreatedUtc);
+                e.HasIndex(x => new { x.ApplicationUserId, x.CreatedUtc });
+
+                // relation with user
+                e.HasOne(x => x.ApplicationUser)
+                    .WithMany(x => x.FeedbackTickets)
+                    .HasForeignKey(x => x.ApplicationUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             builder.Entity<UserLogo>(e =>
             {

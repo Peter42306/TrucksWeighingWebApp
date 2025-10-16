@@ -1,4 +1,6 @@
-﻿@{
+﻿@model TrucksWeighingWebApp.ViewModels.FeedbackTicketViewModel
+
+@{
     ViewData["Title"] = "Contact - Trucks Weighing Web App";
 }
 
@@ -14,8 +16,7 @@
 
 
     <p>
-        For support, requests for custom Excel templates with your company branding,
-        or other inquiries, please use the contact details below:
+        For support or other inquiries, please use the contact details below:
     </p>
 
     @* <h2 class="h4 mb-3">Direct contacts</h2> *@
@@ -36,29 +37,31 @@
         <a href="https://t.me/Petr42306" target="_blank" rel="noopener">&#64;Petr42306</a> *@
 
     </p>
-
+    <hr />
 
     <p>
-        Use the form below to report issues or leave feedback.
-        Please include details like the page or action, what you expected, and what happened.
+        Use the form below to report issues or leave feedback.        
     </p>
 
-   @*  <form asp-action="SendFeedback" method="post">
+    <p>
+        If you encountered an issue, please include details like the page or action, what you expected, and what actually happened.
+    </p>
+
+    <form asp-action="SendFeedback" method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger">
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Message</label>
-            <textarea asp-for="Message" class="form-control" rows="5"></textarea>
+            @* <label class="form-label">Your Message</label> *@
+            <textarea asp-for="Message" class="form-control" rows="5" placeholder="Type your messsage here..."></textarea>
             <span asp-validation-for="Message" class="text-danger"></span>
         </div>
 
-
         <button type="submit" class="btn btn-outline-primary">Send</button>
 
-    </form> *@
+    </form>
 </div>
 
-@* @section Scripts {
+@section Scripts {
     <partial name="_ValidationScriptsPartial" />
-} *@
+}

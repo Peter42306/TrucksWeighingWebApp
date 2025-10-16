@@ -10,7 +10,7 @@ namespace TrucksWeighingWebApp.Models
         public DateTime? LastLoginAt { get; set; }
         public int LoginCount { get; set; } = 0;
         public string? AdminNote { get; set; }
-
+        public ICollection<FeedbackTicket> FeedbackTickets { get; set; } = new List<FeedbackTicket>();
         
     }
 }

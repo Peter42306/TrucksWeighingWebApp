@@ -5,7 +5,7 @@
 @{
     ViewData["Title"] = "Index";
     var logos = (IEnumerable<UserLogo>)(ViewBag.UserLogos ?? Enumerable.Empty<UserLogo>());
-    const int MaxKb = 512;
+    //const int MaxKb = 512;
 }
 
 @if (TempData["Msg"] != null)
@@ -189,7 +189,7 @@
             <td class="text-nowrap">
                 <a asp-controller="TruckRecords" asp-action="Index" asp-route-inspectionId="@item.Id" class="text-nowrap">Trucks List</a> |
                 <a asp-controller="TruckRecords" asp-action="Status" asp-route-inspectionId="@item.Id" class="text-nowrap">Trucks Status</a> |
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Edit" asp-route-id="@item.Id">Details</a> |
                 @* <a asp-action="Details" asp-route-id="@item.Id">Details</a> | *@
                 <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
             </td>

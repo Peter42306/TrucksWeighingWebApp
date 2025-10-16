@@ -765,10 +765,15 @@ namespace TrucksWeighingWebApp.Controllers
             var doc = new TruckPdfExporter(dto, logo);
             var pdfBytes = doc.GeneratePdf();
             var now = Tz.FromUtc(DateTime.UtcNow, timeZone);
+            
+            var fileNameChecked =
+                inspection is null || inspection.Vessel is null
+                ? "Unknown"
+                : inspection.Vessel;
 
             var name = vm.PrintAll 
-                ? $"Tally_{inspection.Vessel}_All.pdf" 
-                : $"Tally_{inspection.Vessel}_{now:yyyy-MM-dd-HHmm}_period_from_{vm.WeighRangeFilter?.FromLocal:yyyy-MM-dd-HHmm}_till_{vm.WeighRangeFilter?.ToLocal:yyyy-MM-dd-HHmm}.pdf";
+                ? $"Tally_{fileNameChecked}_All.pdf" 
+                : $"Tally_{fileNameChecked}_{now:yyyy-MM-dd-HHmm}_period_from_{vm.WeighRangeFilter?.FromLocal:yyyy-MM-dd-HHmm}_till_{vm.WeighRangeFilter?.ToLocal:yyyy-MM-dd-HHmm}.pdf";
 
             return File(pdfBytes, "application/pdf", name);
         }

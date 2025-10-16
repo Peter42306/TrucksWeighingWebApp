@@ -6,24 +6,50 @@
     <h1 class="h4 mb-3">About</h1>
     <hr />
 
-    <p>
-        This web application is designed for cargo surveyors and tally teams to perform accuratre weight caontrol during cargo operations with trucks, during loading or discharging.
-    </p>
-
-    <p>
-        It allows you to keep your data securely in the cloud storage and perform records across multiple devices as well as for tally team.
-    </p>
+    <p><strong>Trucks Weighing Web App</strong> is a web application for cargo surveyors and tally teams that helps control cargo weight during truck operations at terminals (loading or discharging) - in ports, warehouses, and silos.</p>
+    <p>Your data is stored securely in the database and accessible from multiple devices for team workflows.</p>
+    <p>The app is free to use.</p>
 
 
     <h2 class="h4 mt-4">Features</h2>
     <hr />
+    <p><strong>Two control points:</strong> weighbridge and at berth (cargo operations).</p>
+    <p><strong>Truck statuses:</strong> the operator at weighbridge point can see at glance the status of all trucks - after initial weighing, under cargo operations, arrival at the cargo operations area, cargo operations started/finished, and after final weighing.</p>
+    <p><strong>Safety logic:</strong> the operator at the cargo operations point can verify, which trucks have passed the initial weighing and are ready for cargo operations.</p>
+    <p><strong>Extended team workflow:</strong> multi-user concurrent input.</p>
+    <p><strong>Notes:</strong> add and update your notes during inspection, notes are visible to the tally team.</p>
+    <p><strong>Plate number autocomplete:</strong> based on previously entered values.</p>
+    <p><strong>Logo:</strong> select a logo on the inspection form, it is printed in the PDF header.</p>
+    <p><strong>Logo uploads:</strong> up to 5 logos per account.</p>
+    <p><strong>PDF export:</strong> standard daily and summary “Tally Sheet”, totals and balance, optional period filtering.</p>
+    
 
 
-    <p>The app simplifies the trucks weight control process, and ensures reliable and consistent reporting.</p>
-    <p>Keep your data securely in the database and perform surveys across multiple devices.</p>
-    <p>Create, edit, delete, and store your inspections.</p>        
-    <p>Add and update your notes during trucks weight control, available for tally team.</p>
-    <p>Export daily and summary reports to PDF using standard template for trucks weight control.</p>    
+    <h2 class="h5 mt-4">How It Works</h2>
+    <hr class="mt-1" />
+    <ol>
+        <li>Create an inspection (vessel, cargo, place, time zone, optional logo and notes).</li>
+        <li>At the weighbridge, record initial truck data (plate, weight, time) — the list updates as you go.</li>
+        <li>At the berth, mark start and completion of cargo operations per truck.</li>
+        <li>If a second operator at the berth is not required, the double-check at the cargo operations point can be skipped.</li>
+        <li>Finish with final weighing at the weighbridge.</li>
+        <li>Review results and export a PDF (entire period or a selected date/time range).</li>
+    </ol>        
+
+
+    <h2 class="h5 mt-4">Limits</h2>
+    <hr class="mt-1" />
+    <ul>
+        <li>Notes: up to 2000 characters.</li>
+        <li>Logos: PNG/JPG/JPEG, up to 512 KB, up to 5 files per user.</li>        
+    </ul>
+
+    <h2 class ="h5 mt-4">Built with</h2>
+    <hr class="mt-1" />
+    <p>ASP.NET Core MVC, ASP.NET Identity, EF Core, PostgreSQL, QuestPDF, SendGrid, Bootstrap 5, Responsive disign</p>
+    <p>Deployed on Hetzner Cloud (Ubuntu 22.04, Nginx + Kestrel)</p>
+
+    
 
     <hr />
     <p class="small text-muted mt-4">
