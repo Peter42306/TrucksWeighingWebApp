@@ -1,19 +1,24 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using System.Net;
+using System.Security.Claims;
 using TrucksWeighingWebApp.Data;
 using TrucksWeighingWebApp.Infrastructure.Identity;
 using TrucksWeighingWebApp.Infrastructure.Telemetry;
 using TrucksWeighingWebApp.Mappings;
 using TrucksWeighingWebApp.Models;
 using TrucksWeighingWebApp.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
 using TrucksWeighingWebApp.Services.Auth;
 using TrucksWeighingWebApp.Services.Export;
 using TrucksWeighingWebApp.Services.Logos;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +29,13 @@ if (builder.Environment.IsDevelopment())
 }
 
 // SeedOptions
-builder.Services.Configure<SeedOptions>(builder.Configuration.GetSection("Seed"));
+//builder.Services.Configure<SeedOptions>(builder.Configuration.GetSection("Seed"));
+builder.Services
+    .AddOptions<SeedOptions>()
+    .Bind(builder.Configuration.GetSection("Seed"))
+    .Validate(o => o.Roles is { Length: > 0 }, "Seed: Roles must contain at least one role")
+    .Validate(o => !o.EnsureAdmin || (!string.IsNullOrWhiteSpace(o.AdminEmail) && !string.IsNullOrWhiteSpace(o.AdminPassword)), "Seed: EnsureAdmin=true requires AdminEmail and AdminPassword")
+    .ValidateOnStart();
 
 // DB: PostgreSQL
 var connectionString = builder.Configuration
@@ -57,6 +68,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // Email
+builder.Services
+    .AddOptions<SendGridOptions>()
+    .Bind(builder.Configuration.GetSection("SendGrid"))
+    .Validate(options => !string.IsNullOrWhiteSpace(options.ApiKey),"ApiKey missing")
+    .Validate(options => !string.IsNullOrWhiteSpace(options.FromEmail), "FromEmail missing")
+    .ValidateOnStart();
 builder.Services.AddTransient<IEmailSender, SendGridEmailService>();
 
 // Excel export
@@ -75,14 +92,76 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddMemoryCache();
 
+// Ensure persistent Data Protection keys directory exists
+// Keeps authentication cookies and tokens valid after app restarts
+
+var keyPath = builder.Environment.IsDevelopment()
+    ? Path.Combine(builder.Environment.ContentRootPath, "keys")
+    : "/var/lib/aspnet/keys";
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+    .SetApplicationName("TrucksWeighingWebApp");
+
+// Forwarded headers (Nginx)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+    options.KnownProxies.Add(IPAddress.Loopback);
+    options.KnownProxies.Add(IPAddress.IPv6Loopback);
+});
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.HttpOnly = true;
+});
+
 
 var app = builder.Build();
 
-using(var scope = app.Services.CreateScope())
+// Ensure required folder for DataProtection keys exists
+try
 {
+    Directory.CreateDirectory(keyPath);
+    
+    var dirInfo = new DirectoryInfo(keyPath);
+    dirInfo.Attributes |= FileAttributes.Hidden;
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Cannot create/access DataProtection key folder {KeyPath}", keyPath);
+}
+
+
+
+
+// Ensure required folder logos for wwwroot exists
+var logosDir = Path.Combine(app.Environment.WebRootPath, "uploads", "logos");
+try
+{
+    Directory.CreateDirectory(logosDir);
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Failed to create or access logos directory {LogosDir}", logosDir);
+}
+
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+
     var services = scope.ServiceProvider;
     await IdentitySeed.SeedAsync(services);
 }
+
+// Pipeline
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -93,10 +172,10 @@ else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-//!!! uncomment when production
-//app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();

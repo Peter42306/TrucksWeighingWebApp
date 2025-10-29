@@ -48,17 +48,7 @@ namespace TrucksWeighingWebApp.Controllers
             else
             {                
                 query = query.Where(x => x.ApplicationUserId == _userManager.GetUserId(User));
-            }
-
-            //if (User.IsInRole(RoleNames.User))
-            //{
-            //    var currentUserId = _userManager.GetUserId(User);
-            //    query = query.Where(x => x.ApplicationUserId == currentUserId);
-            //}
-            //else if (User.IsInRole(RoleNames.Admin))
-            //{
-            //    query = query.Include(x => x.ApplicationUser);
-            //}
+            }            
 
 
             var inspections = await query

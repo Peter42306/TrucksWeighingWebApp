@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Trucks Status";
-    // string T(DateTime? dt) => dt.HasValue ? dt.Value.ToLocalTime().ToString("HH:mm") : "-";
+    
     string TD(DateTime? dt) => dt.HasValue ? dt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm") : "-";
     string D(TimeSpan? ts) => ts.HasValue ?
         (ts.Value.TotalHours >=24

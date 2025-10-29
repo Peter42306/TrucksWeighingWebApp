@@ -28,18 +28,10 @@ namespace TrucksWeighingWebApp.ViewModels
         
         public int? UserLogoId { get; set; }
         
-        //public List<(int Id, string Text, string FilePath)> LogoOptions = new();
+        
 
         public List<LogoOptionsViewModel> LogoOptions { get; set; } = new();
 
-        //public class LogoOptionVm
-        //{
-        //    public int Id { get; set; }
-        //    public string Name { get; set; } = string.Empty;
-        //    public int Height { get; set; }
-        //    public int PaddingBottom { get; set; }
-        //    public LogoPosition Position { get; set; }
-        //    public string FilePath { get; set; } = string.Empty;
-        //}
+       
     }
 }

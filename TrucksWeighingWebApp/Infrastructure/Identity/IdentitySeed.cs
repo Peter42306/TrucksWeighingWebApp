@@ -8,8 +8,22 @@ namespace TrucksWeighingWebApp.Infrastructure.Identity
 {
     public static class IdentitySeed
     {
+        private static string GetSeedMarkerPath(IServiceProvider sp)
+        {
+            var env = sp.GetRequiredService<IWebHostEnvironment>();
+            return env.IsDevelopment() 
+                ? Path.Combine(env.ContentRootPath, ".identity-seeded") 
+                : "/var/lib/trucks/.identity-seeded";
+        }
+
         public static async Task SeedAsync(IServiceProvider sp)
         {
+            var marker = GetSeedMarkerPath(sp);
+            if (File.Exists(marker))
+            {
+                return;
+            }
+
             var db = sp.GetRequiredService<ApplicationDbContext>();
             var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
@@ -30,27 +44,30 @@ namespace TrucksWeighingWebApp.Infrastructure.Identity
                 }
             }
 
-            // Admin
+            // One time creation of Admin
             if (options.EnsureAdmin)
             {
-                if (string.IsNullOrWhiteSpace(options.AdminEmail) || string.IsNullOrWhiteSpace(options.AdminPassword))
+                var adminEmail = options.AdminEmail; //Environment.GetEnvironmentVariable("ADMIN_EMAIL") ?? options.AdminEmail;
+                var adminPassword = options.AdminPassword; //Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? options.AdminPassword;
+
+                if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
                 {
-                    throw new InvalidOperationException("Admin email/password not set in configuration.");
+                    throw new InvalidOperationException("Seed: AdminEmail/AdminPassword are not set.");
                 }
 
-                var admin = await userManager.FindByEmailAsync(options.AdminEmail);
+                var admin = await userManager.FindByEmailAsync(adminEmail);
                 if (admin == null)
                 {
                     admin = new ApplicationUser
                     {
-                        UserName = options.AdminEmail,
-                        Email = options.AdminEmail,
+                        UserName = adminEmail,
+                        Email = adminEmail,
                         EmailConfirmed = true,
                         FullName = "System Admin",
                         AdminNote = "Seeded admin user"
                     };
 
-                    var result = await userManager.CreateAsync(admin, options.AdminPassword);
+                    var result = await userManager.CreateAsync(admin, adminPassword);
                     if (!result.Succeeded)
                     {
                         throw new Exception("Can't create admin");
@@ -101,6 +118,20 @@ namespace TrucksWeighingWebApp.Infrastructure.Identity
                     }
                 }
             }            
+
+            // Creation marker that directory exists
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(marker)!);
+                await File.WriteAllTextAsync(marker, $"Seeded at {DateTime.UtcNow:O}");
+                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: cannot write seed marker at {marker}: {ex.Message}");
+            }
+                        
+
 
         }        
     }

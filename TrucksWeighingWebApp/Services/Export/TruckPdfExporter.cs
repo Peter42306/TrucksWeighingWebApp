@@ -145,14 +145,6 @@ namespace TrucksWeighingWebApp.Services.Export
                 col.Item().PaddingTop(10).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
                 
 
-                //col.Item().LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
-                //col.Item().Text("Some test text 2");
-
-                //col.Item().LineHorizontal(0.5f).LineColor(Colors.Black); 
-                //col.Item().Text("Some test text 3");
-
-                //col.Item().LineHorizontal(0.25f).LineColor(Colors.Black);
-                //col.Item().Text("Some test text 4");                
             });            
         }
 
@@ -179,10 +171,8 @@ namespace TrucksWeighingWebApp.Services.Export
                 {
                     header.Cell().Element(CellHeader).AlignCenter().Text("#");
                     header.Cell().Element(CellHeader).AlignCenter().Text("TRUCKS");
-                    header.Cell().ColumnSpan(2).Element(CellHeader).AlignCenter().Text("INITIAL WEIGHT, DATE & TIME");
-                    //if (_dto.ShowTimes) header.Cell().Element(CellHeader).Text("DATE & TIME");
-                    header.Cell().ColumnSpan(2).Element(CellHeader).AlignCenter().Text("FINAL WEIGHT, DATE & TIME");
-                    //if (_dto.ShowTimes) header.Cell().Element(CellHeader).Text("DATE & TIME");
+                    header.Cell().ColumnSpan(2).Element(CellHeader).AlignCenter().Text("INITIAL WEIGHT, DATE & TIME");                    
+                    header.Cell().ColumnSpan(2).Element(CellHeader).AlignCenter().Text("FINAL WEIGHT, DATE & TIME");                   
                     header.Cell().Element(CellHeader).AlignCenter().Text("NET, MT");
                     header.Cell().ColumnSpan(7).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
                 });
@@ -247,7 +237,7 @@ namespace TrucksWeighingWebApp.Services.Export
                     }
                     else
                     {
-                        //col.Item().PaddingBottom(10).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
+                        
                         col.Item().Text(txt =>
                         {
                             txt.Span("B/L figure: ");

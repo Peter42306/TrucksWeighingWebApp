@@ -117,8 +117,7 @@ namespace TrucksWeighingWebApp.Services.Logos
                 _db.UserLogos.Add(entity);
                 await _db.SaveChangesAsync(ct);
 
-                _logger.LogInformation("User {UserId} uploaded logo '{Name}' ({SizeKb} KB)", userId, imageName, file.Length / 1024);
-                //_logger.LogInformation($"User {userId} uploaded logo '{imageName}' ({file.Length / 1024} KB)");
+                _logger.LogInformation("User {UserId} uploaded logo '{Name}' ({SizeKb} KB)", userId, imageName, file.Length / 1024);                
 
                 return entity.Id;
             }

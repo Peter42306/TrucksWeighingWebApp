@@ -24,9 +24,7 @@ namespace TrucksWeighingWebApp.Controllers.Admin
             public int ActiveUsers { get; set; }
             public int Registrations { get; set; }
             public int Logins { get; set; }
-            public int UniqueLogins { get; set; }
-            //public int Inspections { get; set; }
-            //public int ExcelExports { get; set; }
+            public int UniqueLogins { get; set; }            
         }
 
         public class StatsVm
@@ -36,12 +34,7 @@ namespace TrucksWeighingWebApp.Controllers.Admin
 
             public int RegistrationsThisMonth { get; set; }
             public int RegistrationsTotal { get; set; }
-
-            //public int InspectionsThisMonth { get; set; }
-            //public int InspectionsTotal { get; set; }
-
-            //public int ExportsThisMonth { get; set; }
-            //public int ExportsTotal { get; set; }
+                       
 
             public int LoginsThisMonth { get; set; }
             public int LoginsTotal { get; set; }
@@ -126,33 +119,8 @@ namespace TrucksWeighingWebApp.Controllers.Admin
                 .GroupBy(s => new { s.StartedUtc.Year, s.StartedUtc.Month })
                 .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Select(x => x.UserId).Distinct().Count() })
                 .ToListAsync();
-
+                        
             
-            //int inspectionsThisMonth = 0, inspectionsTotal = 0;
-            //List<(int Year, int Month, int Count)> monthlyInspections = new();
-            //if (_db.Model.FindEntityType("TrucksWeighingWebApp.Models.Inspection") != null)
-            //{
-            //    inspectionsThisMonth = await _db.Inspections
-            //        .AsNoTracking()
-            //        .Where(i => i.CreatedAt >= monthStart).CountAsync();
-
-            //    inspectionsTotal = await _db.Inspections.AsNoTracking().CountAsync();
-
-            //    monthlyInspections = await _db.Inspections
-            //        .AsNoTracking()
-            //        .GroupBy(i => new { i.CreatedAt.Year, i.CreatedAt.Month })
-            //        .Select(g => new ValueTuple<int, int, int>(g.Key.Year, g.Key.Month, g.Count()))
-            //        .ToListAsync();
-            //}
-
-            // --- Excel exports
-            //int exportsThisMonth = 0, exportsTotal = 0;
-            //List<(int Year, int Month, int Count)> monthlyExports = new();
-            //if (_db.Model.FindEntityType("TrucksWeighingWebApp.Models.ExcelExportLog") != null)
-            //{
-            //    var exports = _db.Set<object>(); // заглушка — поменяешь на DbSet<ExcelExportLog> когда добавишь модель
-            //    // здесь оставляем нули; блок готов к расширению
-            //}
 
             // --- Merge monthly
             var keys = monthlyActiveUsers.Select(x => (x.Year, x.Month))
@@ -163,9 +131,7 @@ namespace TrucksWeighingWebApp.Controllers.Admin
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToList();
 
-            //int GetMonthly(List<(int Year, int Month, int Count)> list, int y, int m)
-            //    => list.FirstOrDefault(t => t.Year == y && t.Month == m).Count;
-
+            
             var monthly = new List<MonthlyRow>();
             foreach (var k in keys)
             {
@@ -174,9 +140,7 @@ namespace TrucksWeighingWebApp.Controllers.Admin
                     Year = k.Year,
                     Month = k.Month,
                     ActiveUsers   = monthlyActiveUsers.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,
-                    Registrations = monthlyRegistrations.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,
-                    //Inspections   = GetMonthly(monthlyInspections, k.Year, k.Month),
-                    //ExcelExports  = GetMonthly(monthlyExports, k.Year, k.Month),
+                    Registrations = monthlyRegistrations.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,                    
                     Logins        = monthlyLogins.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,
                     UniqueLogins  = monthlyUniqueLogins.FirstOrDefault(x => x.Year == k.Year && x.Month == k.Month)?.Count ?? 0,
                 });

@@ -1,5 +1,7 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Trucks Weighing App – Cargo Survey Tool for Truck Operations";
+    ViewData["MetaDescription"] = "Free web app for cargo surveyors and tally teams to manage truck weighing operations. Excel-like workflow, secure server storage, and PDF reporting.";
+    ViewData["OgImage"] = $"{Context.Request.Scheme}://{Context.Request.Host}" + Url.Content("~/images/og/20250219_170035.jpg");
 }
 
 <div>
@@ -28,9 +30,7 @@
                     </div>
                     <div class="carousel-item">
                         <img src="~/images/home/Screenshot_2025-10-14_222447.jpg" class="d-block w-100" alt="Trucks at berth under loading" loading="lazy" decoding="async" asp-append-version="true">
-                    </div>
-                    
-
+                    </div>                   
                 </div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" aria-label="Previous">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -54,12 +54,12 @@
 
             <ul>
                 <li>Free to use</li>
-                <li>Responsive layout for desktops and mobiles</li>
+                <li>Responsive layout for desktop and mobile</li>
                 <li>Two control points: at weighbridge (initial and final weighing) and at cargo operations point (visual status control of each truck)</li>
                 <li>Tracking of truck status between initial and final weighing</li>
-                <li>Autofill of truck plate numbers</li>
+                <li>Auto-fill of truck plate numbers</li>
                 <li>Data stored securely on the server</li>
-                <li>PDF report export by selected period</li>
+                <li>PDF report export by a selected period</li>
             </ul>
 
         </div>
