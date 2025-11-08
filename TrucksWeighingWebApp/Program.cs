@@ -120,6 +120,19 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("PortfolioCors", policy => 
+    {
+        policy.AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithOrigins(
+                "https://p.zalizko.site",
+                "http://localhost:3000"
+                );
+    });
+});
+
 
 var app = builder.Build();
 
@@ -180,11 +193,15 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseCors("PortfolioCors");
+
 app.UseAuthentication();
 
 app.UseMiddleware<UserSessionMiddleware>();
 
 app.UseAuthorization();
+
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",

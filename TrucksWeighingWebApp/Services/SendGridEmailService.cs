@@ -36,6 +36,11 @@ namespace TrucksWeighingWebApp.Services
 
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainText, htmlMessage);
 
+            if (htmlMessage.Contains("From:") && htmlMessage.Contains("@"))
+            {
+                msg.ReplyTo = new EmailAddress(email);
+            }
+
             var response = await client.SendEmailAsync(msg);
 
             var bodyText = await response.Body.ReadAsStringAsync();
