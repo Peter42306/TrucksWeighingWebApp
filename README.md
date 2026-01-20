@@ -204,4 +204,4 @@ TrucksWeighingWebApp/
 
 ## Project status
 
-This is a live, deployed, and actively used application, built as practical tool for the cargo surveyors and tally teams.
+This is a live, deployed, and actively used application, built as practical tool for the cargo surveyors and tally teams that helps control cargo weight during truck operations at terminals - in ports, warehouses, and silos (loading or discharging).
