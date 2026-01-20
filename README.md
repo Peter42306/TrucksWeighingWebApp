@@ -104,9 +104,9 @@ The application supports real-time multi-user workflows, tracking each truck fro
 - PostgreSQL
 - AutoMapper
 
-**Frontend / UI**
+**Frontend**
 
-- ASP.NET Core MVC with Razor Views
+- Razor Pages
 - Server-side validation with domain rules
 - Bootstrap-based responsive layout
 
