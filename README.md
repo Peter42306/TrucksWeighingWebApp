@@ -204,4 +204,4 @@ TrucksWeighingWebApp/
 
 ## Project status
 
-This is a live, deployed, and actively used application, built to solve real operational problems in cargo weight control.
+This is a live, deployed, and actively used application, built as practical tool for the cargo surveyors and tally teams.
