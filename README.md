@@ -24,7 +24,7 @@ The application supports real-time multi-user workflows, tracking each truck fro
 - Pagination and server-side filtering for large truck datasets
 - PDF export (daily and period-based tally sheets with totals and balances)
 - Persistent Data Protection keys (cookies remain valid after restarts)
-- Fully deployed and running production system
+- Deployed and running in production
 
 ## Features
 
