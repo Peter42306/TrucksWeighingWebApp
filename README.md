@@ -106,7 +106,7 @@ The application supports real-time multi-user workflows, tracking each truck fro
 
 **Frontend**
 
-- Razor Pages
+- Razor Views (MVC)
 - Server-side validation with domain rules
 - Bootstrap-based responsive layout
 
