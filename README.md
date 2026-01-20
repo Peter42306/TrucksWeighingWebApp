@@ -98,7 +98,7 @@ The application supports real-time multi-user workflows, tracking each truck fro
 
 **Backend / Web**
 
-- ASP.NET Core MVC + Razor Views
+- ASP.NET Core MVC
 - ASP.NET Core Identity + Roles
 - Entity Framework Core (Code First, migrations)
 - PostgreSQL
