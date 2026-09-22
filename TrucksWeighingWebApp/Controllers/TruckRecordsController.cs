@@ -44,9 +44,28 @@ namespace TrucksWeighingWebApp.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> PlateHints(int inspectionId, string q, int take = 20, CancellationToken ct = default)
+        public async Task<IActionResult> PlateHints(
+            int inspectionId, 
+            string q, 
+            int take = 20, 
+            CancellationToken ct = default)
         {
+            var inspection = await _context.Inspections
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == inspectionId, ct);
+
+            if(inspection == null)
+            {
+                return NotFound();
+            }
+
+            if(!await HasAccessAsync(inspection))
+            {
+                return NotFound();
+            }
+
             q = (q ?? "").Trim();
+
             if (q.Length==0)
             {
                 return Json(Array.Empty<string>());
@@ -436,7 +455,12 @@ namespace TrucksWeighingWebApp.Controllers
             {
                 return NotFound();
             }
-                        
+
+            if (!await HasAccessAsync(editRow.Inspection))
+            {
+                return NotFound();
+            }
+
             editRow.PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ", "");
             editRow.InitialWeight = vm.InitialWeight;
             editRow.FinalWeight = vm.FinalWeight;
@@ -490,7 +514,27 @@ namespace TrucksWeighingWebApp.Controllers
             int pageSize = PageSizesTrucksStatus.Default,
             CancellationToken ct = default)
         {
-            var vm = await TruckRecordPierIndexViewModel.CreateAsync(_context, inspectionId, page, pageSize, ct);
+            var inspection = await _context.Inspections
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == inspectionId, ct);
+
+            if (inspection == null)
+            {
+                return NotFound();
+            }
+
+            if (!await HasAccessAsync(inspection))
+            {
+                return NotFound();
+            }
+
+            var vm = await TruckRecordPierIndexViewModel.CreateAsync(
+                _context, 
+                inspectionId, 
+                page, 
+                pageSize, 
+                ct);
+
             return View(vm);
         }
 
@@ -499,8 +543,20 @@ namespace TrucksWeighingWebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StartCargoOperations(int id, CancellationToken ct)
         {
-            var t = await _context.TruckRecords.FindAsync(new object[] { id }, ct);
-            if (t == null) return NotFound();
+            //var t = await _context.TruckRecords.FindAsync(new object[] { id }, ct);
+            var t = await _context.TruckRecords
+                .Include(x => x.Inspection)
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+            if (t == null)
+            {
+                return NotFound();
+            }
+
+            if (!await HasAccessAsync(t.Inspection))
+            {
+                return NotFound();
+            }
 
             if (t.InitialWeightAtUtc is null)
             {
@@ -526,8 +582,20 @@ namespace TrucksWeighingWebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CompleteCargoOperations(int id, CancellationToken ct)
         {
-            var t = await _context.TruckRecords.FindAsync(new object[] { id }, ct);
-            if (t == null) return NotFound();
+            //var t = await _context.TruckRecords.FindAsync(new object[] { id }, ct);
+            var t = await _context.TruckRecords
+                .Include(x => x.Inspection)
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+            if (t == null) 
+            { 
+                return NotFound(); 
+            }
+
+            if (!await HasAccessAsync(t.Inspection))
+            {
+                return NotFound();
+            }
 
             if (t.InitialBerthAtUtc is null)
             {

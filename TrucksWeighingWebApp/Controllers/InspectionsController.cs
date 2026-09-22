@@ -104,7 +104,13 @@ namespace TrucksWeighingWebApp.Controllers
                 .Include(i => i.ApplicationUser)
                 .Include(i => i.TruckRecords)
                 .FirstOrDefaultAsync(m => m.Id == id, ct);
+            
             if (inspection == null)
+            {
+                return NotFound();
+            }
+
+            if (!await HasAccessAsync(inspection))
             {
                 return NotFound();
             }
@@ -355,12 +361,18 @@ namespace TrucksWeighingWebApp.Controllers
             if (id == null)
             {
                 return NotFound();
-            }
+            }           
 
             var inspection = await _context.Inspections
                 .Include(i => i.ApplicationUser)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (inspection == null)
+            {
+                return NotFound();
+            }
+
+            if (!await HasAccessAsync(inspection))
             {
                 return NotFound();
             }
@@ -374,12 +386,21 @@ namespace TrucksWeighingWebApp.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var inspection = await _context.Inspections.FindAsync(id);
-            if (inspection != null)
+
+            if (inspection == null) 
             {
-                _context.Inspections.Remove(inspection);
+                return NotFound();
             }
 
+            if(!await HasAccessAsync(inspection))
+            {
+                return NotFound();
+            }            
+
+            //await _context.SaveChangesAsync();
+            _context.Inspections.Remove(inspection);
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 
