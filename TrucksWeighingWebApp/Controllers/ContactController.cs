@@ -11,11 +11,19 @@ namespace TrucksWeighingWebApp.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public ContactController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public ContactController(
+            ApplicationDbContext context, 
+            UserManager<ApplicationUser> userManager, 
+            IHttpClientFactory httpClientFactory, 
+            IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -59,6 +67,41 @@ namespace TrucksWeighingWebApp.Controllers
 
             _context.FeedbackTickets.Add(ticket);
             await _context.SaveChangesAsync();
+
+            
+            var feedbackRequest = new FeedbackRequestDto
+            {
+                AppKey = _configuration["ContactFormApi:AppKey"]!,
+                UserId = user.Id,
+                SenderEmail = email,
+                Type = 1, // Feedback type
+                Subject = "Trucks Weighing Web App feedback",
+                Body = msg
+            };
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("ContactFormApi");
+                
+                var response = await client.PostAsJsonAsync("api/feedback", feedbackRequest);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "Your message could not be sent. Please try again.");
+
+                    return View(nameof(Index), vm);
+                }
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(
+                        string.Empty,
+                        "The feedback service is currently unavailable. Please try again later.");
+
+                return View(nameof(Index), vm);
+            }
 
             TempData["FeedbackSent"] = "Thank you! Your message has been sent.";
             return RedirectToAction(nameof(Index));

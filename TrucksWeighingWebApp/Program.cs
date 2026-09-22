@@ -76,6 +76,12 @@ builder.Services
     .ValidateOnStart();
 builder.Services.AddTransient<IEmailSender, SendGridEmailService>();
 
+// ContactFormApi
+builder.Services.AddHttpClient("ContactFormApi", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ContactFormApi:BaseUrl"]!);
+});
+
 // Excel export
 builder.Services.AddSingleton<ITruckExcelExporter, TruckExcelExporter>();
 
