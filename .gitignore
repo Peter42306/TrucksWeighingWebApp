@@ -366,3 +366,9 @@ FodyWeavers.xsd
 **/wwwroot/images/**
 !**/wwwroot/images/.gitkeep
 !**/wwwroot/images/*/.gitkeep
+
+# Local .NET SDK files
+.dotnet/
+
+# ASP.NET Core Data Protection keys
+**/keys/
