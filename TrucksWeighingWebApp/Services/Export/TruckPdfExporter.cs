@@ -171,10 +171,20 @@ namespace TrucksWeighingWebApp.Services.Export
                 {
                     header.Cell().Element(CellHeader).AlignCenter().Text("#");
                     header.Cell().Element(CellHeader).AlignCenter().Text("TRUCKS");
-                    header.Cell().ColumnSpan(2).Element(CellHeader).AlignCenter().Text("INITIAL WEIGHT, DATE & TIME");                    
-                    header.Cell().ColumnSpan(2).Element(CellHeader).AlignCenter().Text("FINAL WEIGHT, DATE & TIME");                   
+
+                    if (_dto.ShowTimes)
+                    {
+                        header.Cell().ColumnSpan(2).Element(CellHeader).AlignCenter().Text("INITIAL WEIGHT, DATE & TIME");
+                        header.Cell().ColumnSpan(2).Element(CellHeader).AlignCenter().Text("FINAL WEIGHT, DATE & TIME");
+                    }
+                    else
+                    {
+                        header.Cell().Element(CellHeader).AlignCenter().Text("INITIAL WEIGHT, MT");
+                        header.Cell().Element(CellHeader).AlignCenter().Text("FINAL WEIGHT, MT");
+                    }
+
                     header.Cell().Element(CellHeader).AlignCenter().Text("NET, MT");
-                    header.Cell().ColumnSpan(7).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
+                    header.Cell().ColumnSpan(_dto.ShowTimes ? 7u : 5u).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
                 });
 
                 // rows
@@ -188,7 +198,7 @@ namespace TrucksWeighingWebApp.Services.Export
                     table.Cell().Element(CellBody).AlignCenter().Text(item.FinalWeight?.ToString("F3") ?? "-");
                     if (_dto.ShowTimes) table.Cell().Element(CellBody).AlignCenter().Text(item.FinalWeighingLocal?.ToString("yyyy-MM-dd HH:mm") ?? "-");
                     table.Cell().Element(CellBody).AlignCenter().Text(item.NetWeight.ToString("F3") ?? "-");
-                        table.Cell().ColumnSpan(7).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
+                        table.Cell().ColumnSpan(_dto.ShowTimes ? 7u : 5u).LineHorizontal(0.25f).LineColor(Colors.Grey.Medium);
 
 
                 }
