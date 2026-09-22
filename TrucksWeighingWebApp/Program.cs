@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -12,7 +11,6 @@ using System.Security.Claims;
 using TrucksWeighingWebApp.Data;
 using TrucksWeighingWebApp.Infrastructure.Identity;
 using TrucksWeighingWebApp.Infrastructure.Telemetry;
-using TrucksWeighingWebApp.Mappings;
 using TrucksWeighingWebApp.Models;
 using TrucksWeighingWebApp.Services;
 using TrucksWeighingWebApp.Services.Auth;
@@ -91,7 +89,7 @@ builder.Services.AddScoped<IUserLogoService, UserLogoService>();
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 // Automapper
-builder.Services.AddAutoMapper(typeof(InspectionProfile));
+//builder.Services.AddAutoMapper(typeof(InspectionProfile));
 
 // MVC
 builder.Services.AddControllersWithViews();

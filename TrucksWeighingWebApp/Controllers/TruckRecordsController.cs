@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using DocumentFormat.OpenXml.Spreadsheet;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -27,22 +26,19 @@ namespace TrucksWeighingWebApp.Controllers
     public class TruckRecordsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMapper _mapper;
+        private readonly UserManager<ApplicationUser> _userManager;        
         private readonly ITruckExcelExporter _excel;
         private readonly IWebHostEnvironment _env;
         
 
         public TruckRecordsController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager,
-            IMapper mapper,
+            UserManager<ApplicationUser> userManager,            
             ITruckExcelExporter excel,
             IWebHostEnvironment env)
         {
             _context = context;
-            _userManager = userManager;
-            _mapper = mapper;
+            _userManager = userManager;            
             _excel = excel;
             _env = env;
         }
@@ -821,7 +817,15 @@ namespace TrucksWeighingWebApp.Controllers
                 return NotFound();
             }
 
-            var truckRecord = _mapper.Map<TruckRecord>(vm);
+            //var truckRecord = _mapper.Map<TruckRecord>(vm);
+            var truckRecord = new TruckRecord
+            {
+                InspectionId = vm.InspectionId,
+                Inspection = inspection,
+                PlateNumber = (vm.PlateNumber ?? string.Empty).Trim().ToUpperInvariant().Replace(" ", ""),
+                InitialWeight = vm.InitialWeight,
+                FinalWeight = vm.FinalWeight
+            };
 
             if (vm.InitialWeight.HasValue)
             {

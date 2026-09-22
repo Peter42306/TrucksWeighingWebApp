@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -20,19 +15,16 @@ namespace TrucksWeighingWebApp.Controllers
     public class InspectionsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMapper _mapper;
+        private readonly UserManager<ApplicationUser> _userManager;        
         private readonly IUserLogoService _logoService;
 
         public InspectionsController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager,
-            IMapper mapper,
+            UserManager<ApplicationUser> userManager,            
             IUserLogoService logoService)
         {
             _context = context;
-            _userManager = userManager;
-            _mapper = mapper;
+            _userManager = userManager;            
             _logoService = logoService;
         }
 
