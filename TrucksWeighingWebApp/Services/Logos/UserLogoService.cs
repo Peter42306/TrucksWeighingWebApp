@@ -7,7 +7,7 @@ namespace TrucksWeighingWebApp.Services.Logos
     public class UserLogoService : IUserLogoService
     {
         private static readonly HashSet<string> AllowedExt = new(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg" };
-        private static readonly HashSet<string> AllowedMime = new(StringComparer.OrdinalIgnoreCase) { "image/png", "image/jpeg" };
+        //private static readonly HashSet<string> AllowedMime = new(StringComparer.OrdinalIgnoreCase) { "image/png", "image/jpeg" };
         private const int MaxBytes = 512 * 1024;
 
         private readonly ApplicationDbContext _db;
@@ -35,18 +35,15 @@ namespace TrucksWeighingWebApp.Services.Logos
             CancellationToken ct)
         {
             if (file is null || file.Length == 0)
+            {
                 throw new InvalidOperationException("Please select a file to upload.");
+            }
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+
             if (ext == ".jpeg")
             {
                 ext = ".jpg";
-            }
-
-            var normalizedContentType = file.ContentType.ToLowerInvariant();
-            if (normalizedContentType != "image/png" && normalizedContentType != "image/jpeg")
-            {
-                normalizedContentType = ext == ".png" ? "image/png" : "image/jpeg";
             }
 
             if (!AllowedExt.Contains(ext))
@@ -54,10 +51,21 @@ namespace TrucksWeighingWebApp.Services.Logos
                 throw new InvalidOperationException("Only .png, .jpg, or .jpeg files are supported.");
             }
 
-            if (!AllowedMime.Contains(normalizedContentType))
+            if (!await HasValidImageSignatureAsync(file, ext, ct))
             {
-                throw new InvalidOperationException("Unsupported file type.");
+                throw new InvalidOperationException("Invalid image file.");
             }
+
+            var normalizedContentType = ext == ".png" 
+                ? "image/png" 
+                : "image/jpeg";            
+
+                        
+
+            //if (!AllowedMime.Contains(normalizedContentType))
+            //{
+            //    throw new InvalidOperationException("Unsupported file type.");
+            //}
 
             imageName = imageName?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(imageName))
@@ -198,6 +206,34 @@ namespace TrucksWeighingWebApp.Services.Logos
             }
 
             return true;
+        }
+
+
+        private static async Task<bool> HasValidImageSignatureAsync(
+            IFormFile file,
+            string ext,
+            CancellationToken ct)
+        {
+            var buffer = new byte[8];
+
+            await using var stream = file.OpenReadStream();
+
+            var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct);
+
+            if (ext == ".png")
+            {
+                byte[] pngSignature = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+                bool isValidPng = bytesRead >= 8 && buffer.SequenceEqual(pngSignature);
+                return isValidPng;
+            }
+
+            if (ext == ".jpg")
+            {
+                bool isValidJpeg = bytesRead >= 3 && buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF;                
+                return isValidJpeg;
+            }
+
+            return false;
         }
     }
 }
